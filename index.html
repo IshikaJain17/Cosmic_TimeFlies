@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COSMOS — Space History & Missions</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --neon-blue:  #00d4ff;
+      --neon-purple:#b000ff;
+      --neon-green: #00ff88;
+      --neon-orange:#ff6600;
+      --neon-pink:  #ff007f;
+      --gold:       #ffd700;
+      --bg-dark:    #020409;
+      --bg-card:    rgba(5,15,35,0.75);
+      --glass:      rgba(255,255,255,0.04);
+      --glass-border:rgba(255,255,255,0.1);
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-dark);
+      color: #e8f4ff;
+      font-family: 'Exo 2', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ===== CANVAS (Three.js) ===== */
+    #cosmos-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #010208; }
+    ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 3px; }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      padding: 14px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(2,4,9,0.75);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,212,255,0.15);
+      transition: all 0.3s;
+    }
+    .nav-logo {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.6rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 4px;
+    }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--neon-blue);
+      transition: width 0.3s;
+    }
+    .nav-links a:hover { color: var(--neon-blue); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* ===== HERO ===== */
+    #hero {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 1;
+      padding: 0 20px;
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 20px;
+      border: 1px solid var(--neon-blue);
+      border-radius: 50px;
+      font-size: 0.72rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--neon-blue);
+      margin-bottom: 26px;
+      animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0%,100% { box-shadow: 0 0 8px var(--neon-blue); }
+      50%      { box-shadow: 0 0 24px var(--neon-blue), 0 0 48px rgba(0,212,255,0.3); }
+    }
+    .hero-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2.8rem, 8vw, 7rem);
+      font-weight: 900;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #ffffff 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      animation: hero-glow 3s ease-in-out infinite alternate;
+    }
+    @keyframes hero-glow {
+      from { filter: drop-shadow(0 0 20px rgba(0,212,255,0.4)); }
+      to   { filter: drop-shadow(0 0 50px rgba(176,0,255,0.5)); }
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+      color: rgba(180,220,255,0.8);
+      max-width: 680px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      font-weight: 300;
+    }
+    .hero-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      padding: 14px 36px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-family: 'Orbitron', monospace;
+      font-size: 0.82rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s;
+      box-shadow: 0 0 24px rgba(0,212,255,0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 40px rgba(0,212,255,0.6);
+    }
+    .btn-outline {
+      padding: 13px 35px;
+      border: 1px solid var(--neon-blue);
+      border-radius: 50px;
+      color: var(--neon-blue);
+      font-family: 'Orbitron', monospace;
+      font-size: 0.82rem;
+      letter-spacing: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      background: transparent;
+      transition: all 0.3s;
+    }
+    .btn-outline:hover {
+      background: rgba(0,212,255,0.1);
+      transform: translateY(-3px);
+      box-shadow: 0 0 20px rgba(0,212,255,0.3);
+    }
+    .scroll-indicator {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: bounce 2s infinite;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+    }
+    .scroll-indicator .mouse {
+      width: 24px; height: 38px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      position: relative;
+    }
+    .scroll-indicator .mouse::after {
+      content: '';
+      position: absolute;
+      top: 6px; left: 50%;
+      transform: translateX(-50%);
+      width: 3px; height: 8px;
+      background: var(--neon-blue);
+      border-radius: 2px;
+      animation: scroll-dot 1.5s infinite;
+    }
+    @keyframes scroll-dot {
+      0%   { top:6px; opacity:1; }
+      100% { top:22px; opacity:0; }
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ===== SECTION BASE ===== */
+    section { position: relative; z-index: 1; }
+    .section-container { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+    .section-label {
+      font-size: 0.72rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--neon-blue);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 18px;
+      background: linear-gradient(90deg, #fff, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .section-desc {
+      color: rgba(180,220,255,0.65);
+      max-width: 620px;
+      line-height: 1.8;
+      font-size: 1rem;
+    }
+
+    /* ===== STATS ===== */
+    #stats { padding: 80px 0; background: rgba(0,212,255,0.03); border-top: 1px solid rgba(0,212,255,0.1); border-bottom: 1px solid rgba(0,212,255,0.1); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 40px; text-align: center; }
+    .stat-item { }
+    .stat-number {
+      font-family: 'Orbitron', monospace;
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label { font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+
+    /* ===== TIMELINE ===== */
+    #timeline { padding: 120px 0; }
+    .timeline-header { text-align: center; margin-bottom: 80px; }
+    .timeline-wrap { position: relative; }
+    .timeline-line {
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, var(--neon-blue) 10%, var(--neon-purple) 90%, transparent);
+      transform: translateX(-50%);
+    }
+    .timeline-items { display: flex; flex-direction: column; gap: 0; }
+    .tl-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 40px;
+      margin-bottom: 60px;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.7s ease;
+    }
+    .tl-item.visible { opacity: 1; transform: translateY(0); }
+    .tl-item:nth-child(even) { flex-direction: row-reverse; }
+    .tl-item:nth-child(even) .tl-content { text-align: right; align-items: flex-end; }
+    .tl-spacer { flex: 1; }
+    .tl-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+    .tl-dot {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 3px solid var(--neon-blue);
+      background: var(--bg-dark);
+      box-shadow: 0 0 16px var(--neon-blue), 0 0 32px rgba(0,212,255,0.4);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .tl-dot::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      background: var(--neon-blue);
+      animation: dot-pulse 2s ease-in-out infinite;
+    }
+    @keyframes dot-pulse {
+      0%,100% { opacity:1; transform: scale(1); }
+      50%      { opacity:0.4; transform: scale(0.6); }
+    }
+    .tl-year {
+      font-family: 'Orbitron', monospace;
+      font-size: 1rem;
+      color: var(--neon-blue);
+      margin-top: 8px;
+      font-weight: 700;
+    }
+    .tl-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .tl-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      backdrop-filter: blur(16px);
+      transition: all 0.3s;
+      max-width: 460px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tl-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,212,255,0.05), rgba(176,0,255,0.05));
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .tl-card:hover::before { opacity: 1; }
+    .tl-card:hover {
+      border-color: var(--neon-blue);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 56px rgba(0,212,255,0.2);
+    }
+    .tl-org {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .org-nasa  { background: rgba(0,138,255,0.2); color: #4da6ff; border: 1px solid rgba(0,138,255,0.3); }
+    .org-isro  { background: rgba(255,120,0,0.2);  color: #ff9b44; border: 1px solid rgba(255,120,0,0.3); }
+    .org-spacex{ background: rgba(176,0,255,0.2); color: #cc66ff; border: 1px solid rgba(176,0,255,0.3); }
+    .org-multi { background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
+    .tl-card h3 { font-family:'Orbitron',monospace; font-size:1.05rem; margin-bottom:8px; color:#fff; }
+    .tl-card p  { font-size:0.9rem; color:rgba(180,220,255,0.7); line-height:1.6; }
+
+    /* ===== AGENCIES ===== */
+    #agencies { padding: 120px 0; }
+    .agencies-header { text-align: center; margin-bottom: 80px; }
+    .agency-section { margin-bottom: 100px; }
+    .agency-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .agency-grid.reverse { direction: rtl; }
+    .agency-grid.reverse > * { direction: ltr; }
+    .agency-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .agency-emblem {
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .agency-emblem svg { width:200px; height:200px; }
+    .agency-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      animation: ring-spin 8s linear infinite;
+    }
+    .agency-ring-2 {
+      position: absolute;
+      inset: -40px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      animation: ring-spin 14s linear infinite reverse;
+    }
+    @keyframes ring-spin { to { transform: rotate(360deg); } }
+    .nasa-color  { background: radial-gradient(circle, rgba(0,80,180,0.2), rgba(0,20,60,0.6)); }
+    .nasa-color  .agency-ring   { border-color: rgba(0,138,255,0.5); border-top-color: transparent; }
+    .nasa-color  .agency-ring-2 { border-color: rgba(0,200,255,0.25); border-bottom-color: transparent; }
+    .isro-color  { background: radial-gradient(circle, rgba(255,80,0,0.2), rgba(60,20,0,0.6)); }
+    .isro-color  .agency-ring   { border-color: rgba(255,120,0,0.5); border-top-color: transparent; }
+    .isro-color  .agency-ring-2 { border-color: rgba(255,200,0,0.25); border-bottom-color: transparent; }
+    .spacex-color{ background: radial-gradient(circle, rgba(120,0,200,0.2), rgba(20,0,40,0.6)); }
+    .spacex-color .agency-ring   { border-color: rgba(176,0,255,0.5); border-top-color: transparent; }
+    .spacex-color .agency-ring-2 { border-color: rgba(255,0,128,0.25); border-bottom-color: transparent; }
+    .agency-info { }
+    .agency-info .section-label { margin-bottom: 6px; }
+    .agency-name {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      margin-bottom: 16px;
+      line-height: 1.1;
+    }
+    .nasa-name  { background: linear-gradient(90deg, #4da6ff, #00d4ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .isro-name  { background: linear-gradient(90deg, #ff6b2b, #ffd700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .spacex-name{ background: linear-gradient(90deg, #cc66ff, #ff007f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .agency-desc { color: rgba(180,220,255,0.7); line-height:1.8; margin-bottom: 28px; font-size: 0.98rem; }
+    .mission-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
+    .tag {
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .tag-blue   { background: rgba(0,212,255,0.12); color: var(--neon-blue);   border: 1px solid rgba(0,212,255,0.25); }
+    .tag-orange { background: rgba(255,120,0,0.12); color: #ff9b44;            border: 1px solid rgba(255,120,0,0.25); }
+    .tag-purple { background: rgba(176,0,255,0.12); color: #cc66ff;            border: 1px solid rgba(176,0,255,0.25); }
+    .tag-green  { background: rgba(0,255,136,0.1);  color: var(--neon-green);  border: 1px solid rgba(0,255,136,0.25); }
+    .agency-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .a-stat {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .a-stat-n { font-family:'Orbitron',monospace; font-size:1.4rem; font-weight:700; }
+    .a-stat-l { font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-top:4px; }
+    .nasa-n   .a-stat-n { color: #4da6ff; }
+    .isro-n   .a-stat-n { color: #ff9b44; }
+    .spacex-n .a-stat-n { color: #cc66ff; }
+
+    /* ===== MISSION CARDS ===== */
+    #missions { padding: 120px 0; background: rgba(176,0,255,0.02); }
+    .missions-header { text-align:center; margin-bottom: 60px; }
+    .missions-filter { display:flex; gap:12px; justify-content:center; margin-bottom:40px; flex-wrap:wrap; }
+    .filter-btn {
+      padding: 8px 22px;
+      border-radius: 30px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      color: rgba(255,255,255,0.55);
+      font-size:0.8rem;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      cursor:pointer;
+      transition: all 0.3s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      background: rgba(0,212,255,0.1);
+      box-shadow: 0 0 16px rgba(0,212,255,0.2);
+    }
+    .missions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .mission-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .mc-media {
+      height: 170px;
+      margin: -28px -28px 16px;
+      border-bottom: 1px solid var(--glass-border);
+      overflow: hidden;
+      position: relative;
+      background: #060b1a;
+    }
+    .mc-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.05) contrast(1.08);
+      transition: transform 0.45s;
+    }
+    .mission-card:hover .mc-media img { transform: scale(1.06); }
+    .mc-actions {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .mc-link {
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      color: var(--neon-blue);
+      text-decoration: none;
+      border: 1px solid rgba(0,212,255,0.32);
+      border-radius: 30px;
+      padding: 6px 12px;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .mc-link:hover {
+      background: rgba(0,212,255,0.12);
+      box-shadow: 0 0 18px rgba(0,212,255,0.22);
+    }
+    .mission-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .mc-nasa::before   { background: linear-gradient(90deg, #0050b4, #00d4ff); }
+    .mc-isro::before   { background: linear-gradient(90deg, #ff4500, #ffd700); }
+    .mc-spacex::before { background: linear-gradient(90deg, #7700cc, #ff007f); }
+    .mission-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .mc-nasa:hover   { box-shadow: 0 24px 60px rgba(0,138,255,0.25); border-color: rgba(0,138,255,0.4); }
+    .mc-isro:hover   { box-shadow: 0 24px 60px rgba(255,120,0,0.25); border-color: rgba(255,120,0,0.4); }
+    .mc-spacex:hover { box-shadow: 0 24px 60px rgba(176,0,255,0.25); border-color: rgba(176,0,255,0.4); }
+    .mc-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 18px;
+    }
+    .mc-nasa   .mc-icon { background: rgba(0,138,255,0.15); }
+    .mc-isro   .mc-icon { background: rgba(255,120,0,0.15); }
+    .mc-spacex .mc-icon { background: rgba(176,0,255,0.15); }
+    .mc-year {
+      font-family:'Orbitron',monospace;
+      font-size:0.7rem;
+      letter-spacing:3px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 8px;
+    }
+    .mc-name {
+      font-family:'Orbitron',monospace;
+      font-size:1.05rem;
+      font-weight:700;
+      color:#fff;
+      margin-bottom: 10px;
+    }
+    .mc-desc { font-size:0.88rem; color:rgba(180,220,255,0.65); line-height:1.6; margin-bottom: 18px; }
+    .mc-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:0.72rem; letter-spacing:1px;
+    }
+    .badge-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .badge-success { color: var(--neon-green); }
+    .badge-success .badge-dot { background: var(--neon-green); box-shadow: 0 0 8px var(--neon-green); }
+    .badge-ongoing { color: var(--gold); }
+    .badge-ongoing .badge-dot { background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: dot-pulse 1s infinite; }
+    .badge-planned { color: #aaa; }
+    .badge-planned .badge-dot { background: #aaa; }
+
+    /* ===== SEARCH HUB ===== */
+    #search-hub { padding: 90px 0; background: rgba(0,80,150,0.04); }
+    .search-hub-box {
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      background: rgba(2,10,24,0.78);
+      backdrop-filter: blur(18px);
+      padding: 28px;
+    }
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      margin: 18px 0 10px;
+      align-items: center;
+    }
+    #globalSearch {
+      width: 100%;
+      border: 1px solid rgba(0,212,255,0.25);
+      background: rgba(0,0,0,0.2);
+      color: #e8f4ff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    #globalSearch:focus {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.12);
+    }
+    .search-clear {
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+      color: #d8e6ff;
+      border-radius: 14px;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+    .search-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: rgba(180,220,255,0.7);
+      font-size: 0.82rem;
+    }
+    .search-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .search-tags span {
+      font-size: 0.72rem;
+      padding: 5px 10px;
+      border-radius: 30px;
+      border: 1px solid var(--glass-border);
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      user-select: none;
+    }
+    .search-tags span:hover { border-color: var(--neon-blue); color: var(--neon-blue); }
+    .official-link-grid {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+    .official-link-grid a {
+      text-decoration: none;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03);
+      color: rgba(200,225,255,0.85);
+      font-size: 0.8rem;
+      padding: 10px 12px;
+      transition: all 0.3s;
+    }
+    .official-link-grid a:hover {
+      border-color: rgba(0,212,255,0.4);
+      color: var(--neon-blue);
+      transform: translateY(-2px);
+    }
+
+    /* ===== ONGOING PROJECTS ===== */
+    #ongoing { padding: 120px 0; background: rgba(0,255,136,0.03); }
+    .ongoing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .ongoing-card {
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      background: var(--bg-card);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      transition: all 0.35s;
+    }
+    .ongoing-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 22px 48px rgba(0,0,0,0.35);
+      border-color: rgba(0,255,136,0.35);
+    }
+    .ongoing-media { height: 170px; background: #060b1a; }
+    .ongoing-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ongoing-body { padding: 18px 20px 22px; }
+    .ongoing-org {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.68rem;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      border: 1px solid var(--glass-border);
+      color: rgba(220,240,255,0.9);
+      text-transform: uppercase;
+    }
+    .ongoing-title { font-family: 'Orbitron', monospace; font-size: 1rem; color: #fff; margin-bottom: 9px; }
+    .ongoing-desc { color: rgba(180,220,255,0.66); font-size: 0.87rem; line-height: 1.6; min-height: 68px; }
+    .ongoing-meta {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ongoing-status {
+      color: var(--neon-green);
+      font-size: 0.72rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .ongoing-link {
+      color: var(--neon-blue);
+      text-decoration: none;
+      font-size: 0.74rem;
+      border: 1px solid rgba(0,212,255,0.32);
+      border-radius: 20px;
+      padding: 6px 10px;
+    }
+
+    /* ===== ELON MILESTONES ===== */
+    #elon-milestones { padding: 110px 0; }
+    .elon-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .elon-item {
+      border: 1px solid var(--glass-border);
+      background: rgba(36, 4, 54, 0.42);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .elon-year { font-family: 'Orbitron', monospace; color: #dd88ff; font-size: 0.86rem; margin-bottom: 6px; }
+    .elon-title { color: #fff; font-size: 0.93rem; margin-bottom: 8px; }
+    .elon-item a {
+      color: #9ad8ff;
+      font-size: 0.78rem;
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(154,216,255,0.45);
+    }
+
+    /* ===== ELON / FUTURE ===== */
+    #future { padding: 120px 0; }
+    .future-header { text-align: center; margin-bottom: 80px; }
+    .future-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 28px; }
+    .future-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+    .future-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-purple), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s;
+    }
+    .future-card:hover::after { transform: scaleX(1); }
+    .future-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(176,0,255,0.2); border-color: rgba(176,0,255,0.4); }
+    .fc-num {
+      font-family:'Orbitron',monospace;
+      font-size:3rem;
+      font-weight:900;
+      color: rgba(176,0,255,0.15);
+      line-height:1;
+      margin-bottom: 16px;
+    }
+    .fc-title { font-family:'Orbitron',monospace; font-size:1.1rem; color:#fff; margin-bottom:12px; }
+    .fc-desc  { font-size:0.9rem; color:rgba(180,220,255,0.65); line-height:1.7; }
+    .fc-year  { margin-top:16px; font-size:0.75rem; letter-spacing:2px; color:var(--neon-purple); }
+
+    /* ===== MARQUEE ===== */
+    #marquee-section { padding: 30px 0; overflow: hidden; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(0,212,255,0.02); }
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee-scroll 30s linear infinite;
+      gap: 60px;
+    }
+    .marquee-track span { color: rgba(255,255,255,0.25); font-size:0.8rem; letter-spacing:4px; text-transform:uppercase; white-space:nowrap; }
+    .marquee-track span.highlight { color: var(--neon-blue); }
+    @keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ===== PEOPLE SECTION ===== */
+    #pioneers { padding: 120px 0; background: rgba(0,212,255,0.02); }
+    .pioneers-header { text-align:center; margin-bottom: 70px; }
+    .pioneers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 28px; }
+    .pioneer-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
+    }
+    .pioneer-card:hover { transform: translateY(-8px); border-color: rgba(255,255,255,0.2); }
+    .pioneer-avatar {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      position: relative;
+    }
+    .pioneer-avatar::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(var(--neon-blue), var(--neon-purple), var(--neon-blue));
+      z-index: -1;
+      animation: ring-spin 4s linear infinite;
+    }
+    .pioneer-name { font-family:'Orbitron',monospace; font-size:0.95rem; font-weight:700; color:#fff; margin-bottom: 6px; }
+    .pioneer-role { font-size:0.78rem; color:var(--neon-blue); letter-spacing:2px; text-transform:uppercase; margin-bottom: 12px; }
+    .pioneer-desc { font-size:0.85rem; color:rgba(180,220,255,0.6); line-height:1.6; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 60px 0 30px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      text-align: center;
+    }
+    .footer-logo {
+      font-family:'Orbitron',monospace;
+      font-size: 2rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .footer-tagline { color: rgba(255,255,255,0.3); font-size:0.85rem; letter-spacing:3px; margin-bottom:30px; }
+    .footer-links { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-bottom: 40px; }
+    .footer-links a { color:rgba(255,255,255,0.4); text-decoration:none; font-size:0.8rem; letter-spacing:2px; text-transform:uppercase; transition: color 0.3s; }
+    .footer-links a:hover { color: var(--neon-blue); }
+    .footer-copy { color: rgba(255,255,255,0.15); font-size:0.78rem; }
+    .footer-stars {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* ===== GLOW DIVIDER ===== */
+    .glow-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-purple), transparent); margin: 0; opacity: 0.4; }
+
+    /* ===== FLOATING PARTICLES ===== */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+      0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== PLANET DECORATIONS ===== */
+    .deco-planet {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(1px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      .section-container { padding: 0 20px; }
+      .agency-grid { grid-template-columns: 1fr; gap: 40px; }
+      .agency-grid.reverse { direction: ltr; }
+      .tl-item { flex-direction: column !important; gap: 16px; }
+      .tl-item .tl-spacer { display: none; }
+      .tl-item:nth-child(even) .tl-content { text-align: left; align-items:flex-start; }
+      .timeline-line { left: 10px; }
+      .tl-node { flex-direction: row; gap: 12px; align-items: center; }
+      .agency-stats { grid-template-columns: repeat(3,1fr); }
+      .search-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .agency-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 3D Canvas -->
+<canvas id="cosmos-canvas"></canvas>
+
+<!-- NAVIGATION -->
+<nav id="navbar">
+  <div class="nav-logo">COSMOS</div>
+  <ul class="nav-links">
+    <li><a href="#search-hub">Search</a></li>
+    <li><a href="#timeline">Timeline</a></li>
+    <li><a href="#agencies">Agencies</a></li>
+    <li><a href="#missions">Missions</a></li>
+    <li><a href="#ongoing">Ongoing</a></li>
+    <li><a href="#elon-milestones">Elon</a></li>
+    <li><a href="#future">Future</a></li>
+    <li><a href="#pioneers">Pioneers</a></li>
+  </ul>
+  <a href="#missions" class="btn-outline" style="font-size:0.72rem;padding:8px 20px;">Explore</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-badge">&#x1F6F8; Exploring the Final Frontier</div>
+  <h1 class="hero-title">BEYOND<br>THE STARS</h1>
+  <p class="hero-sub">A comprehensive journey through humanity's greatest achievements in space exploration — from Sputnik to Mars, from ISRO's Chandrayaan to SpaceX's Starship.</p>
+  <div class="hero-buttons">
+    <a href="#timeline" class="btn-primary">Launch Journey</a>
+    <a href="#agencies" class="btn-outline">Meet Agencies</a>
+  </div>
+  <div class="scroll-indicator">
+    <div class="mouse"></div>
+    <span>SCROLL</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div id="marquee-section">
+  <div class="marquee-track" id="marquee">
+    <span class="highlight">NASA</span><span>&#8226;</span>
+    <span>Apollo 11</span><span>&#8226;</span>
+    <span class="highlight">ISRO</span><span>&#8226;</span>
+    <span>Chandrayaan-3</span><span>&#8226;</span>
+    <span class="highlight">SPACEX</span><span>&#8226;</span>
+    <span>Falcon 9</span><span>&#8226;</span>
+    <span>Starship</span><span>&#8226;</span>
+    <span class="highlight">ISS</span><span>&#8226;</span>
+    <span>Mars Mission</span><span>&#8226;</span>
+    <span class="highlight">Hubble</span><span>&#8226;</span>
+    <span>James Webb</span><span>&#8226;</span>
+    <span class="highlight">Voyager</span><span>&#8226;</span>
+    <span>Moon Landing</span><span>&#8226;</span>
+    <span class="highlight">Artemis</span><span>&#8226;</span>
+    <span>Commercial Crew</span><span>&#8226;</span>
+    <!-- duplicate for seamless -->
+    <span class="highlight">NASA</span><span>&#8226;</span>
+    <span>Apollo 11</span><span>&#8226;</span>
+    <span class="highlight">ISRO</span><span>&#8226;</span>
+    <span>Chandrayaan-3</span><span>&#8226;</span>
+    <span class="highlight">SPACEX</span><span>&#8226;</span>
+    <span>Falcon 9</span><span>&#8226;</span>
+    <span>Starship</span><span>&#8226;</span>
+    <span class="highlight">ISS</span><span>&#8226;</span>
+    <span>Mars Mission</span><span>&#8226;</span>
+    <span class="highlight">Hubble</span><span>&#8226;</span>
+    <span>James Webb</span><span>&#8226;</span>
+    <span class="highlight">Voyager</span><span>&#8226;</span>
+    <span>Moon Landing</span><span>&#8226;</span>
+    <span class="highlight">Artemis</span><span>&#8226;</span>
+    <span>Commercial Crew</span><span>&#8226;</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="section-container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <span class="stat-number" data-target="65">0</span>
+        <div class="stat-label">Years of Space Age</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" data-target="600">0</span>
+        <div class="stat-label">Humans in Space</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" data-target="1100">0</span>
+        <div class="stat-label">Active Satellites</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" data-target="140">0</span>
+        <div class="stat-label">Planetary Missions</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" data-target="3">0</span>
+        <div class="stat-label">Mars Rovers Active</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- SEARCH HUB -->
+<section id="search-hub">
+  <div class="section-container">
+    <div class="search-hub-box">
+      <p class="section-label">Searchable Knowledge Base</p>
+      <h2 class="section-title" style="margin-bottom:8px;">Find Any Milestone Fast</h2>
+      <p class="section-desc" style="max-width:100%;">Type mission names, years, agencies, keywords like <strong>Elon</strong>, <strong>ISRO</strong>, <strong>NASA</strong>, <strong>ongoing</strong>, <strong>Artemis</strong>, or <strong>Starship</strong>. This filters timeline milestones, mission cards, ongoing projects, and Elon milestone entries live.</p>
+
+      <div class="search-row">
+        <input id="globalSearch" type="text" placeholder="Search milestones, projects, agencies, year..." aria-label="Search milestones and projects" />
+        <button class="search-clear" id="clearSearchBtn" type="button">Clear Search</button>
+      </div>
+
+      <div class="search-meta">
+        <div id="searchCount">Showing all records</div>
+        <div class="search-tags">
+          <span data-tag="nasa">NASA</span>
+          <span data-tag="isro">ISRO</span>
+          <span data-tag="spacex">SpaceX</span>
+          <span data-tag="elon">Elon Musk</span>
+          <span data-tag="ongoing">Ongoing</span>
+          <span data-tag="moon">Moon</span>
+          <span data-tag="mars">Mars</span>
+        </div>
+      </div>
+
+      <div class="official-link-grid">
+        <a href="https://www.nasa.gov/missions/" target="_blank" rel="noopener">NASA Mission Catalog</a>
+        <a href="https://www.nasa.gov/humans-in-space/artemis/" target="_blank" rel="noopener">NASA Artemis Program</a>
+        <a href="https://www.isro.gov.in/SpacecraftMissions.html" target="_blank" rel="noopener">ISRO Spacecraft Missions</a>
+        <a href="https://www.isro.gov.in/Gaganyaan.html" target="_blank" rel="noopener">ISRO Gaganyaan</a>
+        <a href="https://www.spacex.com/updates/" target="_blank" rel="noopener">SpaceX Mission Updates</a>
+        <a href="https://www.spacex.com/vehicles/starship/" target="_blank" rel="noopener">SpaceX Starship</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div class="section-container">
+    <div class="timeline-header">
+      <p class="section-label">&#128336; Space History</p>
+      <h2 class="section-title">Journey Through Time</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">From the first satellite to multi-planetary ambitions — every leap that shaped our understanding of the cosmos.</p>
+    </div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-line"></div>
+      <div class="timeline-items">
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-multi">USSR</span>
+              <h3>Sputnik 1 — First Satellite</h3>
+              <p>The Soviet Union launches Earth's first artificial satellite, igniting the Space Race and forever changing humanity's future among the stars.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1957</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1961</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-multi">USSR</span>
+              <h3>Yuri Gagarin — First Human in Space</h3>
+              <p>Cosmonaut Yuri Gagarin orbits Earth aboard Vostok 1, becoming the first human to travel into outer space, completing a 108‑minute journey.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-nasa">NASA</span>
+              <h3>Apollo 11 — Moon Landing</h3>
+              <p>Neil Armstrong and Buzz Aldrin become the first humans to walk on the Moon. "One small step for man, one giant leap for mankind."</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1969</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1975</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-isro">ISRO</span>
+              <h3>Aryabhata — India's First Satellite</h3>
+              <p>India enters the space era with the launch of Aryabhata, its first satellite, marking the dawn of ISRO as a serious space power.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-nasa">NASA</span>
+              <h3>Space Shuttle — Reusable Era Begins</h3>
+              <p>Columbia's maiden flight marks the beginning of the Space Shuttle program, opening a new era of reusable spacecraft and space station construction.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1981</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1990</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-nasa">NASA</span>
+              <h3>Hubble Space Telescope Launch</h3>
+              <p>The Hubble Space Telescope is deployed, revolutionizing our view of the universe and producing iconic imagery that redefined cosmology.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-multi">INTERNATIONAL</span>
+              <h3>ISS Construction Begins</h3>
+              <p>The International Space Station starts assembly in orbit — a unprecedented collaboration between 15 nations representing peaceful use of outer space.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">1998</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2002</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-spacex">SPACEX</span>
+              <h3>SpaceX Founded by Elon Musk</h3>
+              <p>Elon Musk founds Space Exploration Technologies with the audacious goal of reducing space transportation costs and enabling colonization of Mars.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-isro">ISRO</span>
+              <h3>Chandrayaan-1 — India Reaches Moon</h3>
+              <p>India's first lunar probe Chandrayaan-1 discovers water molecules on the lunar surface — a groundbreaking find that reshaped lunar science.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2008</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2012</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-spacex">SPACEX</span>
+              <h3>Dragon Docks with ISS</h3>
+              <p>SpaceX's Dragon becomes the first commercial spacecraft to berth with the ISS, marking the arrival of the private space transportation era.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-isro">ISRO</span>
+              <h3>MOM — Mars Orbiter Mission</h3>
+              <p>Mangalyaan enters Mars orbit on ISRO's first attempt, making India the first Asian nation and only country to succeed on its maiden Mars mission.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2014</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2015</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-spacex">SPACEX</span>
+              <h3>Falcon 9 Booster Landing</h3>
+              <p>SpaceX successfully lands and recovers an orbital-class rocket booster for the first time in history, a pivotal milestone in reusable rocketry.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-nasa">NASA</span>
+              <h3>James Webb Space Telescope</h3>
+              <p>JWST begins full scientific operations, peering deeper into the universe than ever before and capturing the earliest light in cosmic history.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2022</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-spacer"></div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2023</div>
+          </div>
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-isro">ISRO</span>
+              <h3>Chandrayaan-3 — Moon's South Pole</h3>
+              <p>Vikram lander soft-lands near the lunar south pole. India becomes the 4th nation to land on the Moon and the first at the south pole.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-content">
+            <div class="tl-card">
+              <span class="tl-org org-spacex">SPACEX</span>
+              <h3>Starship Full Stack Test Flight</h3>
+              <p>SpaceX's Starship — the most powerful rocket ever built — successfully completes orbital test flights, clearing the path to Mars colonization.</p>
+            </div>
+          </div>
+          <div class="tl-node">
+            <div class="tl-dot"></div>
+            <div class="tl-year">2024</div>
+          </div>
+          <div class="tl-spacer"></div>
+        </div>
+
+      </div><!-- /timeline-items -->
+    </div><!-- /timeline-wrap -->
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- AGENCIES -->
+<section id="agencies">
+  <div class="section-container">
+    <div class="agencies-header">
+      <p class="section-label">&#127758; Space Powers</p>
+      <h2 class="section-title">The Giants of Space</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">Three forces shaping humanity's destiny beyond Earth — each with a unique vision, culture, and achievement record.</p>
+    </div>
+
+    <!-- NASA -->
+    <div class="agency-section">
+      <div class="agency-grid">
+        <div class="agency-logo-wrap">
+          <div class="agency-emblem nasa-color">
+            <div class="agency-ring"></div>
+            <div class="agency-ring-2"></div>
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Stylised NASA worm-inspired text art -->
+              <circle cx="100" cy="100" r="88" stroke="#0066cc" stroke-width="3" opacity="0.6"/>
+              <circle cx="100" cy="100" r="70" stroke="#0099ff" stroke-width="1.5" opacity="0.4"/>
+              <ellipse cx="100" cy="100" rx="88" ry="28" stroke="#00aaff" stroke-width="2" opacity="0.5"/>
+              <text x="100" y="95" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="24" font-weight="900" fill="#4da6ff">NASA</text>
+              <text x="100" y="118" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#aac8ff" letter-spacing="4">NATIONAL</text>
+              <text x="100" y="130" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#aac8ff" letter-spacing="4">AERONAUTICS</text>
+              <!-- Stars -->
+              <circle cx="30" cy="60"  r="2" fill="#00d4ff" opacity="0.8"/>
+              <circle cx="170" cy="140" r="2" fill="#00d4ff" opacity="0.8"/>
+              <circle cx="55" cy="155" r="1.5" fill="#fff" opacity="0.5"/>
+              <circle cx="145" cy="45" r="1.5" fill="#fff" opacity="0.5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="agency-info">
+          <p class="section-label">Est. 1958 · USA</p>
+          <h3 class="agency-name nasa-name">NASA</h3>
+          <p class="agency-desc">The National Aeronautics and Space Administration stands as humanity's premier space exploration agency. With missions spanning the Moon, Mars, deep solar system, and beyond, NASA has produced countless scientific breakthroughs — from landing 12 humans on the Moon to deploying the James Webb Space Telescope, humanity's window to the dawn of the universe.</p>
+          <div class="mission-tags" style="margin-bottom:18px;">
+            <a class="tag tag-blue" style="text-decoration:none;" href="https://www.nasa.gov/missions/" target="_blank" rel="noopener">Official Mission Archive</a>
+            <a class="tag tag-green" style="text-decoration:none;" href="https://science.nasa.gov/" target="_blank" rel="noopener">NASA Science</a>
+          </div>
+          <div class="mission-tags">
+            <span class="tag tag-blue">Apollo Program</span>
+            <span class="tag tag-blue">Space Shuttle</span>
+            <span class="tag tag-blue">ISS</span>
+            <span class="tag tag-blue">Mars Rovers</span>
+            <span class="tag tag-blue">Artemis</span>
+            <span class="tag tag-green">Webb Telescope</span>
+          </div>
+          <div class="agency-stats nasa-n">
+            <div class="a-stat"><div class="a-stat-n">12</div><div class="a-stat-l">Moon Walkers</div></div>
+            <div class="a-stat"><div class="a-stat-n">50+</div><div class="a-stat-l">Mars Missions</div></div>
+            <div class="a-stat"><div class="a-stat-n">350+</div><div class="a-stat-l">Astronauts</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ISRO -->
+    <div class="agency-section">
+      <div class="agency-grid reverse">
+        <div class="agency-logo-wrap">
+          <div class="agency-emblem isro-color">
+            <div class="agency-ring"></div>
+            <div class="agency-ring-2"></div>
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="100" cy="100" r="88" stroke="#ff6600" stroke-width="3" opacity="0.6"/>
+              <circle cx="100" cy="100" r="70" stroke="#ffaa00" stroke-width="1.5" opacity="0.4"/>
+              <!-- Rocket silhouette -->
+              <ellipse cx="100" cy="80" rx="16" ry="28" fill="none" stroke="#ff9900" stroke-width="2" opacity="0.8"/>
+              <polygon points="100,45 88,68 112,68" fill="rgba(255,153,0,0.4)" stroke="#ffb300" stroke-width="1.5"/>
+              <line x1="84" y1="95" x2="84" y2="108" stroke="#ff6600" stroke-width="2"/>
+              <line x1="116" y1="95" x2="116" y2="108" stroke="#ff6600" stroke-width="2"/>
+              <text x="100" y="140" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="22" font-weight="900" fill="#ff9b44">ISRO</text>
+              <text x="100" y="158" text-anchor="middle" font-family="sans-serif" font-size="7" fill="#ffcc80" letter-spacing="3">INDIA · SPACE</text>
+              <circle cx="32" cy="70"  r="2" fill="#ffd700" opacity="0.8"/>
+              <circle cx="168" cy="130" r="2" fill="#ffd700" opacity="0.8"/>
+            </svg>
+          </div>
+        </div>
+        <div class="agency-info">
+          <p class="section-label">Est. 1969 · India</p>
+          <h3 class="agency-name isro-name">ISRO</h3>
+          <p class="agency-desc">The Indian Space Research Organisation is one of the world's most cost-effective and innovative space agencies. ISRO pioneered the concept of frugal space engineering — achieving Mars orbit on its very first attempt and landing near the Moon's south pole for the first time in history. With Gaganyaan, India is set to join the elite club of human spaceflight nations.</p>
+          <div class="mission-tags" style="margin-bottom:18px;">
+            <a class="tag tag-orange" style="text-decoration:none;" href="https://www.isro.gov.in/SpacecraftMissions.html" target="_blank" rel="noopener">ISRO Mission Archive</a>
+            <a class="tag tag-green" style="text-decoration:none;" href="https://www.isro.gov.in/Gaganyaan.html" target="_blank" rel="noopener">Gaganyaan Program</a>
+          </div>
+          <div class="mission-tags">
+            <span class="tag tag-orange">Chandrayaan Series</span>
+            <span class="tag tag-orange">Mangalyaan / MOM</span>
+            <span class="tag tag-orange">PSLV / GSLV</span>
+            <span class="tag tag-orange">Gaganyaan</span>
+            <span class="tag tag-orange">Aditya-L1</span>
+            <span class="tag tag-green">South Pole Landing</span>
+          </div>
+          <div class="agency-stats isro-n">
+            <div class="a-stat"><div class="a-stat-n">100+</div><div class="a-stat-l">Launches</div></div>
+            <div class="a-stat"><div class="a-stat-n">1st</div><div class="a-stat-l">Asian Mars</div></div>
+            <div class="a-stat"><div class="a-stat-n">4th</div><div class="a-stat-l">Moon Nation</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPACEX / ELON -->
+    <div class="agency-section" style="margin-bottom:0;">
+      <div class="agency-grid">
+        <div class="agency-logo-wrap">
+          <div class="agency-emblem spacex-color">
+            <div class="agency-ring"></div>
+            <div class="agency-ring-2"></div>
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="100" cy="100" r="88" stroke="#8800cc" stroke-width="3" opacity="0.6"/>
+              <!-- Starship silhouette -->
+              <ellipse cx="100" cy="75" rx="14" ry="32" fill="rgba(176,0,255,0.2)" stroke="#aa44ff" stroke-width="2"/>
+              <polygon points="100,38 88,58 112,58" fill="rgba(200,0,255,0.3)" stroke="#cc55ff" stroke-width="1.5"/>
+              <polygon points="86,90 78,115 92,115" fill="rgba(176,0,255,0.3)" stroke="#aa44ff" stroke-width="1"/>
+              <polygon points="114,90 122,115 108,115" fill="rgba(176,0,255,0.3)" stroke="#aa44ff" stroke-width="1"/>
+              <text x="100" y="145" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="16" font-weight="900" fill="#cc66ff">SPACEX</text>
+              <text x="100" y="162" text-anchor="middle" font-family="sans-serif" font-size="7" fill="#dd99ff" letter-spacing="2">ELON MUSK</text>
+              <circle cx="34" cy="55"  r="2" fill="#ff00aa" opacity="0.8"/>
+              <circle cx="166" cy="145" r="2" fill="#ff00aa" opacity="0.8"/>
+            </svg>
+          </div>
+        </div>
+        <div class="agency-info">
+          <p class="section-label">Est. 2002 · USA · Private</p>
+          <h3 class="agency-name spacex-name">SPACEX &amp; ELON</h3>
+          <p class="agency-desc">Elon Musk's SpaceX has single-handedly disrupted the space industry with revolutionary reusable rocket technology. From the Falcon 1 to Falcon 9, Dragon, and the mega-Starship, SpaceX has driven down launch costs by over 90%. Musk's bold vision: make humanity a multi-planetary species with a self-sustaining city on Mars within this century.</p>
+          <div class="mission-tags" style="margin-bottom:18px;">
+            <a class="tag tag-purple" style="text-decoration:none;" href="https://www.spacex.com/updates/" target="_blank" rel="noopener">SpaceX Updates</a>
+            <a class="tag tag-green" style="text-decoration:none;" href="https://www.spacex.com/humanspaceflight/" target="_blank" rel="noopener">Human Spaceflight</a>
+          </div>
+          <div class="mission-tags">
+            <span class="tag tag-purple">Falcon 9 Reuse</span>
+            <span class="tag tag-purple">Dragon Crew</span>
+            <span class="tag tag-purple">Starlink</span>
+            <span class="tag tag-purple">Starship</span>
+            <span class="tag tag-purple">Mars Colonization</span>
+            <span class="tag tag-green">Commercial Crew</span>
+          </div>
+          <div class="agency-stats spacex-n">
+            <div class="a-stat"><div class="a-stat-n">250+</div><div class="a-stat-l">Launches</div></div>
+            <div class="a-stat"><div class="a-stat-n">6500+</div><div class="a-stat-l">Starlinks</div></div>
+            <div class="a-stat"><div class="a-stat-n">90%</div><div class="a-stat-l">Cost Reduction</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- MISSIONS -->
+<section id="missions">
+  <div class="section-container">
+    <div class="missions-header">
+      <p class="section-label">&#128640; Mission Archive</p>
+      <h2 class="section-title">Historic Missions</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">The defining missions that made space history and inspired generations of explorers.</p>
+    </div>
+
+    <div class="missions-filter">
+      <button class="filter-btn active" onclick="filterMissions('all',this)">All</button>
+      <button class="filter-btn" onclick="filterMissions('nasa',this)">NASA</button>
+      <button class="filter-btn" onclick="filterMissions('isro',this)">ISRO</button>
+      <button class="filter-btn" onclick="filterMissions('spacex',this)">SpaceX</button>
+    </div>
+
+    <div class="missions-grid" id="missionsGrid">
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#x1F30D;</div>
+        <div class="mc-year">1969 · MISSION</div>
+        <div class="mc-name">Apollo 11</div>
+        <div class="mc-desc">First crewed Moon landing. Neil Armstrong and Buzz Aldrin spent 2.5 hours on the lunar surface while Michael Collins orbited above.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Success</div>
+      </div>
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#x1F52D;</div>
+        <div class="mc-year">1990 · TELESCOPE</div>
+        <div class="mc-name">Hubble Space Telescope</div>
+        <div class="mc-desc">Orbiting at 547 km, Hubble has made over 1.5 million observations and fundamentally transformed our view of the cosmos.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Still Operational</div>
+      </div>
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#x1F6F8;</div>
+        <div class="mc-year">2004 · ROVER</div>
+        <div class="mc-name">Mars Exploration Rovers</div>
+        <div class="mc-desc">Spirit and Opportunity unveiled Mars's geological history. Opportunity operated for 15 years, far exceeding its 90-day mission design.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Complete</div>
+      </div>
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#127774;</div>
+        <div class="mc-year">2021 · TELESCOPE</div>
+        <div class="mc-name">James Webb Telescope</div>
+        <div class="mc-desc">The most powerful space telescope ever built, observing the universe in infrared to peer back 13.8 billion years to the first galaxies.</div>
+        <div class="mc-badge badge-ongoing"><div class="badge-dot"></div>Operational</div>
+      </div>
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#127763;</div>
+        <div class="mc-year">2022 · LUNAR</div>
+        <div class="mc-name">Artemis I</div>
+        <div class="mc-desc">NASA's uncrewed Orion capsule completes a 25-day mission around the Moon, validating the SLS rocket for crewed Artemis missions.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Success</div>
+      </div>
+
+      <div class="mission-card mc-nasa" data-agency="nasa">
+        <div class="mc-icon">&#x1F916;</div>
+        <div class="mc-year">2021 · ROVER</div>
+        <div class="mc-name">Perseverance Rover</div>
+        <div class="mc-desc">NASA's most advanced rover seeks signs of ancient microbial life on Mars and caches samples for future return to Earth.</div>
+        <div class="mc-badge badge-ongoing"><div class="badge-dot"></div>Active on Mars</div>
+      </div>
+
+      <div class="mission-card mc-isro" data-agency="isro">
+        <div class="mc-icon">&#127764;</div>
+        <div class="mc-year">2008 · LUNAR</div>
+        <div class="mc-name">Chandrayaan-1</div>
+        <div class="mc-desc">India's maiden lunar mission discovered water ice on the Moon's permanently shadowed craters — one of space science's biggest revelations.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Success</div>
+      </div>
+
+      <div class="mission-card mc-isro" data-agency="isro">
+        <div class="mc-icon">&#128308;</div>
+        <div class="mc-year">2013 · MARS</div>
+        <div class="mc-name">Mangalyaan (MOM)</div>
+        <div class="mc-desc">Mars Orbiter Mission succeeded on its very first attempt at a fraction of Hollywood's Mars movie budget, a testament to ISRO's frugal genius.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Success</div>
+      </div>
+
+      <div class="mission-card mc-isro" data-agency="isro">
+        <div class="mc-icon">&#127764;</div>
+        <div class="mc-year">2023 · LUNAR</div>
+        <div class="mc-name">Chandrayaan-3</div>
+        <div class="mc-desc">Historic soft landing near lunar south pole. Vikram and Pragyan rover confirmed sulfur and other elements, setting new records for India.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Historic Success</div>
+      </div>
+
+      <div class="mission-card mc-isro" data-agency="isro">
+        <div class="mc-icon">&#9728;</div>
+        <div class="mc-year">2023 · SOLAR</div>
+        <div class="mc-name">Aditya-L1</div>
+        <div class="mc-desc">India's first solar observatory placed at the Sun-Earth Lagrange Point 1 to study solar winds, corona, and space weather phenomena.</div>
+        <div class="mc-badge badge-ongoing"><div class="badge-dot"></div>Operational</div>
+      </div>
+
+      <div class="mission-card mc-isro" data-agency="isro">
+        <div class="mc-icon">&#x1F9D1;&#x200D;&#x1F680;</div>
+        <div class="mc-year">2025 · CREWED</div>
+        <div class="mc-name">Gaganyaan</div>
+        <div class="mc-desc">India's first indigenous human spaceflight program, set to carry Indian astronauts (Vyomanauts) to low Earth orbit in an exciting new chapter.</div>
+        <div class="mc-badge badge-planned"><div class="badge-dot"></div>In Development</div>
+      </div>
+
+      <div class="mission-card mc-spacex" data-agency="spacex">
+        <div class="mc-icon">&#x1F680;</div>
+        <div class="mc-year">2015 · ROCKET</div>
+        <div class="mc-name">Falcon 9 Booster Return</div>
+        <div class="mc-desc">SpaceX lands an orbital-class rocket for the first time in history, fundamentally disrupting the economics of space access worldwide.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Milestone</div>
+      </div>
+
+      <div class="mission-card mc-spacex" data-agency="spacex">
+        <div class="mc-icon">&#x1F6F8;</div>
+        <div class="mc-year">2020 · CREWED</div>
+        <div class="mc-name">Crew Dragon Demo-2</div>
+        <div class="mc-desc">First commercial crewed spaceflight. Astronauts Behnken and Hurley reach the ISS aboard SpaceX's Dragon, reviving US crewed launch capability.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Mission Success</div>
+      </div>
+
+      <div class="mission-card mc-spacex" data-agency="spacex">
+        <div class="mc-icon">&#127758;</div>
+        <div class="mc-year">2019-NOW · INTERNET</div>
+        <div class="mc-name">Starlink Constellation</div>
+        <div class="mc-desc">Over 6,500 satellites provide global broadband internet coverage, generating revenue that funds SpaceX's Mars ambitions.</div>
+        <div class="mc-badge badge-ongoing"><div class="badge-dot"></div>Expanding</div>
+      </div>
+
+      <div class="mission-card mc-spacex" data-agency="spacex">
+        <div class="mc-icon">&#x1F3D7;</div>
+        <div class="mc-year">2023-2024 · ROCKET</div>
+        <div class="mc-name">Starship IFT Flights</div>
+        <div class="mc-desc">The fully integrated Starship — 120m tall, most powerful rocket ever — completes integrated flight tests, paving the way for Mars missions.</div>
+        <div class="mc-badge badge-success"><div class="badge-dot"></div>Test Success</div>
+      </div>
+
+      <div class="mission-card mc-spacex" data-agency="spacex">
+        <div class="mc-icon">&#128308;</div>
+        <div class="mc-year">2026+ · MARS</div>
+        <div class="mc-name">Mars Colonization Plan</div>
+        <div class="mc-desc">SpaceX plans to send 1,000 Starships to Mars per synodic window, with the long-term goal of a self-sustaining city of 1 million people.</div>
+        <div class="mc-badge badge-planned"><div class="badge-dot"></div>Planned</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- ONGOING PROJECTS -->
+<section id="ongoing">
+  <div class="section-container">
+    <div class="missions-header">
+      <p class="section-label">Live Programs</p>
+      <h2 class="section-title">Ongoing Projects: NASA, ISRO, SpaceX</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">Current high-impact projects actively shaping the next decade of exploration.</p>
+    </div>
+
+    <div class="ongoing-grid" id="ongoingGrid">
+      <article class="ongoing-card" data-search-item="NASA Artemis II crewed moon mission ongoing">
+        <div class="ongoing-media"><img src="https://images-assets.nasa.gov/image/KSC-20221215-PH-KLS01_0084/KSC-20221215-PH-KLS01_0084~large.jpg" alt="NASA Artemis rocket" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">NASA</span>
+          <h3 class="ongoing-title">Artemis II &amp; Artemis III</h3>
+          <p class="ongoing-desc">Crewed Moon-return missions in active integration and testing, with Orion, SLS, and lunar landing systems under continuous development.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Ongoing</span><a class="ongoing-link" href="https://www.nasa.gov/humans-in-space/artemis/" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+
+      <article class="ongoing-card" data-search-item="NASA James Webb telescope deep space science ongoing">
+        <div class="ongoing-media"><img src="https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e001861/GSFC_20171208_Archive_e001861~orig.jpg" alt="James Webb Space Telescope" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">NASA</span>
+          <h3 class="ongoing-title">James Webb Science Operations</h3>
+          <p class="ongoing-desc">JWST is actively observing exoplanets, early galaxies, and stellar nurseries, continuously publishing transformational deep-space data.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Ongoing</span><a class="ongoing-link" href="https://science.nasa.gov/mission/webb/" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+
+      <article class="ongoing-card" data-search-item="ISRO Gaganyaan human spaceflight project ongoing">
+        <div class="ongoing-media"><img src="https://www.isro.gov.in/media_isro/image/index/Gaganyaan/Gaganyaan2.jpg.webp" alt="ISRO Gaganyaan training and module" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">ISRO</span>
+          <h3 class="ongoing-title">Gaganyaan Human Spaceflight</h3>
+          <p class="ongoing-desc">India's first crewed orbital program progressing through abort tests, module qualification, astronaut training, and launch-system readiness.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Ongoing</span><a class="ongoing-link" href="https://www.isro.gov.in/Gaganyaan.html" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+
+      <article class="ongoing-card" data-search-item="ISRO Aditya L1 solar mission operations ongoing">
+        <div class="ongoing-media"><img src="https://www.isro.gov.in/media_isro/image/index/AdityaL1/AdityaL1-Home.jpg.webp" alt="ISRO Aditya L1 mission visual" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">ISRO</span>
+          <h3 class="ongoing-title">Aditya-L1 Solar Observatory</h3>
+          <p class="ongoing-desc">Operational at Sun-Earth L1, Aditya-L1 is monitoring coronal activity and solar wind behavior for science and space-weather forecasting.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Operational</span><a class="ongoing-link" href="https://www.isro.gov.in/AdityaL1.html" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+
+      <article class="ongoing-card" data-search-item="SpaceX Starship integrated flight test ongoing Elon Musk Mars">
+        <div class="ongoing-media"><img src="https://www.spacex.com/static/images/share.jpg" alt="SpaceX Starship on launch pad" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">SpaceX / Elon</span>
+          <h3 class="ongoing-title">Starship Flight Test Campaign</h3>
+          <p class="ongoing-desc">Starship and Super Heavy are in rapid iterative test cycles toward full reusability, satellite deployment, lunar missions, and future Mars cargo flights.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Ongoing</span><a class="ongoing-link" href="https://www.spacex.com/vehicles/starship/" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+
+      <article class="ongoing-card" data-search-item="SpaceX Starlink constellation expansion ongoing">
+        <div class="ongoing-media"><img src="https://www.spacex.com/static/images/backgrounds/starlink_mission.jpg" alt="SpaceX Starlink satellites" loading="lazy" /></div>
+        <div class="ongoing-body">
+          <span class="ongoing-org">SpaceX / Elon</span>
+          <h3 class="ongoing-title">Starlink Global Expansion</h3>
+          <p class="ongoing-desc">The Starlink constellation keeps expanding with higher throughput satellites, direct-to-cell capability, and broader global service coverage.</p>
+          <div class="ongoing-meta"><span class="ongoing-status">Ongoing</span><a class="ongoing-link" href="https://www.starlink.com/" target="_blank" rel="noopener">Official Page</a></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- ELON MILESTONES -->
+<section id="elon-milestones">
+  <div class="section-container">
+    <div class="missions-header">
+      <p class="section-label">Entrepreneur Timeline</p>
+      <h2 class="section-title">Elon Musk Space Milestones</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">A quick, searchable timeline focused on Elon Musk's space milestones and SpaceX growth moments.</p>
+    </div>
+    <div class="elon-list" id="elonMilestoneList">
+      <article class="elon-item" data-search-item="2002 elon spacex founded">
+        <div class="elon-year">2002</div>
+        <div class="elon-title">SpaceX founded to lower launch costs and enable Mars settlement.</div>
+        <a href="https://www.spacex.com/" target="_blank" rel="noopener">Learn more</a>
+      </article>
+      <article class="elon-item" data-search-item="2008 falcon 1 first privately developed liquid rocket orbit elon">
+        <div class="elon-year">2008</div>
+        <div class="elon-title">Falcon 1 reaches orbit, validating SpaceX as a serious launch provider.</div>
+        <a href="https://www.spacex.com/vehicles/falcon-9/" target="_blank" rel="noopener">Falcon program</a>
+      </article>
+      <article class="elon-item" data-search-item="2012 dragon first commercial spacecraft ISS">
+        <div class="elon-year">2012</div>
+        <div class="elon-title">Dragon becomes the first commercial spacecraft to visit the ISS.</div>
+        <a href="https://www.spacex.com/vehicles/dragon/" target="_blank" rel="noopener">Dragon overview</a>
+      </article>
+      <article class="elon-item" data-search-item="2015 falcon 9 first orbital booster landing reusable">
+        <div class="elon-year">2015</div>
+        <div class="elon-title">First successful Falcon 9 booster landing accelerates reusable launch systems.</div>
+        <a href="https://www.spacex.com/vehicles/falcon-9/" target="_blank" rel="noopener">Falcon reusability</a>
+      </article>
+      <article class="elon-item" data-search-item="2020 crew dragon demo-2 first private crewed mission">
+        <div class="elon-year">2020</div>
+        <div class="elon-title">Crew Dragon Demo-2 launches astronauts to ISS under NASA Commercial Crew.</div>
+        <a href="https://www.nasa.gov/commercialcrew/" target="_blank" rel="noopener">NASA Commercial Crew</a>
+      </article>
+      <article class="elon-item" data-search-item="2023 2024 starship integrated flight tests ongoing">
+        <div class="elon-year">2023-2024</div>
+        <div class="elon-title">Starship integrated test flights move toward full reusability and orbital operations.</div>
+        <a href="https://www.spacex.com/vehicles/starship/" target="_blank" rel="noopener">Starship updates</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- FUTURE -->
+<section id="future">
+  <div class="section-container">
+    <div class="future-header">
+      <p class="section-label">&#127769; What Comes Next</p>
+      <h2 class="section-title">The Future of Space</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">The next chapters of human spaceflight will be the most ambitious in history — and they're already underway.</p>
+    </div>
+
+    <div class="future-grid">
+      <div class="future-card">
+        <div class="fc-num">01</div>
+        <div class="fc-title">Return to the Moon</div>
+        <div class="fc-desc">NASA's Artemis program will land the first woman and next man near the lunar south pole, establishing a permanent Gateway station in lunar orbit.</div>
+        <div class="fc-year">NASA ARTEMIS · 2026</div>
+      </div>
+      <div class="future-card">
+        <div class="fc-num">02</div>
+        <div class="fc-title">Humans on Mars</div>
+        <div class="fc-desc">SpaceX's Starship targets the first uncrewed cargo missions to Mars in 2026, with crewed missions planned for the next launch window — the greatest voyage in history.</div>
+        <div class="fc-year">SPACEX · 2026-2028</div>
+      </div>
+      <div class="future-card">
+        <div class="fc-num">03</div>
+        <div class="fc-title">India's Human Spaceflight</div>
+        <div class="fc-desc">Gaganyaan will launch Indian Vyomanauts to orbit, forming the foundation for a future Indian space station and lunar exploration program.</div>
+        <div class="fc-year">ISRO GAGANYAAN · 2025</div>
+      </div>
+      <div class="future-card">
+        <div class="fc-num">04</div>
+        <div class="fc-title">Venus Exploration</div>
+        <div class="fc-desc">NASA's DAVINCI and VERITAS missions, along with ESA's EnVision, will map Venus in unprecedented detail and solve the mystery of its runaway greenhouse effect.</div>
+        <div class="fc-year">NASA / ESA · 2029</div>
+      </div>
+      <div class="future-card">
+        <div class="fc-num">05</div>
+        <div class="fc-title">Europa Life Search</div>
+        <div class="fc-desc">NASA's Europa Clipper will investigate the ocean beneath Europa's icy crust — potentially the most habitable place in our solar system beyond Earth.</div>
+        <div class="fc-year">NASA EUROPA CLIPPER · 2030</div>
+      </div>
+      <div class="future-card">
+        <div class="fc-num">06</div>
+        <div class="fc-title">Deep Space Gateway</div>
+        <div class="fc-desc">The Lunar Gateway — an international space station orbiting the Moon — will serve as a staging point for missions to the Moon, Mars, and beyond.</div>
+        <div class="fc-year">INTERNATIONAL · 2027</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-divider"></div>
+
+<!-- PIONEERS -->
+<section id="pioneers">
+  <div class="section-container">
+    <div class="pioneers-header">
+      <p class="section-label">&#11088; Legends</p>
+      <h2 class="section-title">Pioneers of the Cosmos</h2>
+      <p class="section-desc" style="margin:0 auto;text-align:center;">The visionaries and astronauts whose courage and brilliance expanded humanity's horizons.</p>
+    </div>
+
+    <div class="pioneers-grid">
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(0,80,180,0.3);">&#x1F468;&#x200D;&#x1F680;</div>
+        <div class="pioneer-name">Neil Armstrong</div>
+        <div class="pioneer-role">NASA Astronaut</div>
+        <div class="pioneer-desc">First human to walk on the Moon on July 20, 1969. His immortal words defined humanity's greatest achievement.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(120,0,0,0.3);">&#x1F9D1;&#x200D;&#x1F680;</div>
+        <div class="pioneer-name">Yuri Gagarin</div>
+        <div class="pioneer-role">Cosmonaut · USSR</div>
+        <div class="pioneer-desc">First human in space (1961). His 108-minute Vostok 1 flight changed history and sparked the global space age.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(176,0,255,0.3);">&#x1F9D4;</div>
+        <div class="pioneer-name">Elon Musk</div>
+        <div class="pioneer-role">CEO · SpaceX</div>
+        <div class="pioneer-desc">The visionary who privatised space, built the world's most powerful rockets, and is actively building humanity's path to Mars.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(255,80,0,0.3);">&#x1F468;&#x200D;&#x1F4BB;</div>
+        <div class="pioneer-name">Dr. K. Sivan</div>
+        <div class="pioneer-role">Former Chairman · ISRO</div>
+        <div class="pioneer-desc">Nicknamed "Rocket Man of India," he engineered Chandrayaan-2 and led ISRO's most ambitious missions of the 21st century.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(0,100,180,0.3);">&#x1F91D;</div>
+        <div class="pioneer-name">Dr. APJ Abdul Kalam</div>
+        <div class="pioneer-role">ISRO · Missile Man</div>
+        <div class="pioneer-desc">Father of India's missile program and key architect of ISRO's early satellite launch vehicle technology. India's beloved people's president.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(0,120,60,0.3);">&#x1F9D1;&#x200D;&#x1F52C;</div>
+        <div class="pioneer-name">Dr. S. Somanath</div>
+        <div class="pioneer-role">Chairman · ISRO</div>
+        <div class="pioneer-desc">Led the success of Chandrayaan-3 and Aditya-L1. His leadership ushered in ISRO's golden era of planetary and lunar exploration.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(0,80,160,0.3);">&#x1F469;&#x200D;&#x1F680;</div>
+        <div class="pioneer-name">Sally Ride</div>
+        <div class="pioneer-role">NASA Astronaut</div>
+        <div class="pioneer-desc">First American woman in space (1983). A physicist, teacher, and trailblazer who inspired generations of women in STEM and space exploration.</div>
+      </div>
+      <div class="pioneer-card">
+        <div class="pioneer-avatar" style="background:rgba(50,0,100,0.3);">&#x1F468;&#x200D;&#x1F4BC;</div>
+        <div class="pioneer-name">Wernher von Braun</div>
+        <div class="pioneer-role">NASA Engineer</div>
+        <div class="pioneer-desc">Designed the Saturn V rocket that took Apollo astronauts to the Moon — the most powerful rocket ever flown until Starship.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="section-container">
+    <div class="footer-logo">COSMOS</div>
+    <div class="footer-tagline">EXPLORING THE INFINITE — ONE MISSION AT A TIME</div>
+    <div class="footer-links">
+      <a href="#hero">Home</a>
+      <a href="#search-hub">Search</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#agencies">Agencies</a>
+      <a href="#missions">Missions</a>
+      <a href="#ongoing">Ongoing</a>
+      <a href="#elon-milestones">Elon</a>
+      <a href="#future">Future</a>
+      <a href="#pioneers">Pioneers</a>
+    </div>
+    <div class="footer-copy">Cosmos Space Explorer &copy; 2026 &nbsp;|&nbsp; Built with passion for the stars &nbsp;|&nbsp; Data sourced from NASA, ISRO &amp; SpaceX public records</div>
+  </div>
+</footer>
+
+<!-- ========= SCRIPTS ========= -->
+<script>
+/* ======================================
+   THREE.JS — STAR FIELD + PLANETS
+   ====================================== */
+(function() {
+  const canvas = document.getElementById('cosmos-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.z = 1;
+
+  // --- STARS ---
+  const starCount = 8000;
+  const starGeo   = new THREE.BufferGeometry();
+  const starPos   = new Float32Array(starCount * 3);
+  const starColors= new Float32Array(starCount * 3);
+  const palette   = [
+    [1.0, 1.0, 1.0],
+    [0.5, 0.85, 1.0],
+    [0.7, 0.5, 1.0],
+    [1.0, 0.9, 0.6],
+    [0.4, 0.9, 1.0],
+  ];
+  for (let i = 0; i < starCount; i++) {
+    starPos[i*3]   = (Math.random()-0.5)*2000;
+    starPos[i*3+1] = (Math.random()-0.5)*2000;
+    starPos[i*3+2] = (Math.random()-0.5)*2000;
+    const c = palette[Math.floor(Math.random()*palette.length)];
+    starColors[i*3] = c[0]; starColors[i*3+1] = c[1]; starColors[i*3+2] = c[2];
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+  const starMat = new THREE.PointsMaterial({ size: 0.8, vertexColors: true, transparent:true, opacity:0.85 });
+  scene.add(new THREE.Points(starGeo, starMat));
+
+  // --- NEBULA CLOUDS (large blobs) ---
+  function makeNebula(color, x, y, z, size) {
+    const geo = new THREE.SphereGeometry(size, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.04, wireframe:false });
+    const mesh= new THREE.Mesh(geo, mat);
+    mesh.position.set(x, y, z);
+    scene.add(mesh);
+    return mesh;
+  }
+  makeNebula(0x0066ff, -300, 200, -600, 280);
+  makeNebula(0x8800cc, 350, -150, -500, 240);
+  makeNebula(0x00aaff, 100, -300, -700, 300);
+
+  // --- SPINNING EARTH ---
+  const earthGeo = new THREE.SphereGeometry(80, 64, 64);
+  const earthMat = new THREE.MeshPhongMaterial({
+    color: 0x1a6ea8,
+    emissive: 0x0a2040,
+    emissiveIntensity: 0.3,
+    specular: 0x224488,
+    shininess: 30,
+    wireframe: false,
+  });
+  const earth = new THREE.Mesh(earthGeo, earthMat);
+  earth.position.set(320, -60, -500);
+  scene.add(earth);
+
+  // Continent-like land patches (low-poly sphere overlay)
+  const landGeo = new THREE.SphereGeometry(81, 12, 12);
+  const landMat = new THREE.MeshBasicMaterial({ color:0x2d8c4e, transparent:true, opacity:0.35, wireframe:true });
+  const land = new THREE.Mesh(landGeo, landMat);
+  land.position.copy(earth.position);
+  scene.add(land);
+
+  // Atmosphere glow
+  const atmGeo = new THREE.SphereGeometry(88, 32, 32);
+  const atmMat = new THREE.MeshBasicMaterial({ color:0x00aaff, transparent:true, opacity:0.08, side: THREE.BackSide });
+  const atm = new THREE.Mesh(atmGeo, atmMat);
+  atm.position.copy(earth.position);
+  scene.add(atm);
+
+  // --- MOON ---
+  const moonGeo = new THREE.SphereGeometry(22, 32, 32);
+  const moonMat = new THREE.MeshPhongMaterial({ color:0xaaaaaa, emissive:0x222222 });
+  const moon    = new THREE.Mesh(moonGeo, moonMat);
+  moon.position.set(-340, 120, -500);
+  scene.add(moon);
+
+  // --- SATURN-LIKE RINGED PLANET ---
+  const satGeo = new THREE.SphereGeometry(45, 32, 32);
+  const satMat = new THREE.MeshPhongMaterial({ color:0xc8a870, emissive:0x201000 });
+  const saturn = new THREE.Mesh(satGeo, satMat);
+  saturn.position.set(-250, -320, -800);
+  scene.add(saturn);
+
+  const ringGeo = new THREE.RingGeometry(55, 90, 64);
+  const ringMat = new THREE.MeshBasicMaterial({ color:0xb09050, transparent:true, opacity:0.35, side:THREE.DoubleSide });
+  const ring    = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI / 3;
+  ring.position.copy(saturn.position);
+  scene.add(ring);
+
+  // --- AMBIENT + POINT LIGHTS ---
+  scene.add(new THREE.AmbientLight(0x112244, 0.8));
+  const sun = new THREE.PointLight(0x4499ff, 2, 2000);
+  sun.position.set(600, 300, 0);
+  scene.add(sun);
+
+  // --- SHOOTING STARS ---
+  const shootingStars = [];
+  function spawnShootingStar() {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(6);
+    const x = (Math.random()-0.5)*1600;
+    const y = 400 + Math.random()*400;
+    pos[0]=x; pos[1]=y; pos[2]=0;
+    pos[3]=x; pos[4]=y; pos[5]=0;
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.LineBasicMaterial({ color:0x88ddff, transparent:true, opacity:0.9 });
+    const line= new THREE.Line(geo, mat);
+    scene.add(line);
+    shootingStars.push({ line, geo, x, y, vx: (Math.random()-0.5)*6, vy:-(Math.random()*4+2), life:0, maxLife:80 });
+  }
+  setInterval(spawnShootingStar, 2600);
+
+  // --- PARALLAX ---
+  let mx=0, my=0;
+  document.addEventListener('mousemove', e => {
+    mx = (e.clientX/window.innerWidth - 0.5) * 2;
+    my = (e.clientY/window.innerHeight - 0.5) * 2;
+  });
+
+  // --- RESIZE ---
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // --- SCROLL PARALLAX ---
+  let scrollY = 0;
+  window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+
+  // --- ANIMATE ---
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.004;
+
+    // Star twinkle
+    starMat.opacity = 0.7 + Math.sin(t * 3) * 0.15;
+
+    // Earth rotation
+    earth.rotation.y += 0.002;
+    land.rotation.y  += 0.002;
+    atm.rotation.y   -= 0.001;
+
+    // Moon orbit
+    const mr = 180;
+    moon.position.x = earth.position.x + mr * Math.cos(t * 0.3);
+    moon.position.y = earth.position.y + mr * Math.sin(t * 0.15) * 0.3;
+    moon.position.z = earth.position.z + mr * Math.sin(t * 0.3);
+    moon.rotation.y += 0.005;
+
+    // Saturn spin
+    saturn.rotation.y += 0.003;
+    ring.rotation.z   += 0.001;
+
+    // Camera parallax
+    camera.position.x += (mx * 8 - camera.position.x) * 0.03;
+    camera.position.y += (-my * 8 - camera.position.y) * 0.03;
+    camera.position.z = 1 - scrollY * 0.0008;
+    camera.lookAt(scene.position);
+
+    // Star field slow drift
+    scene.rotation.y = t * 0.01 + mx * 0.02;
+    scene.rotation.x = my * 0.02;
+
+    // Shooting stars update
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const s = shootingStars[i];
+      s.life++;
+      s.x += s.vx; s.y += s.vy;
+      const tail = 60;
+      const arr = s.geo.attributes.position.array;
+      arr[0] = s.x; arr[1] = s.y; arr[2] = 0;
+      arr[3] = s.x - s.vx*tail/s.vx; arr[4] = s.y - s.vy*(tail/Math.abs(s.vy)||1); arr[5] = 0;
+      s.geo.attributes.position.needsUpdate = true;
+      const fade = 1 - s.life/s.maxLife;
+      s.line.material.opacity = fade * 0.9;
+      if (s.life >= s.maxLife) {
+        scene.remove(s.line);
+        shootingStars.splice(i, 1);
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+/* ======================================
+   FLOATING PARTICLES
+   ====================================== */
+(function() {
+  const colors = ['#00d4ff','#b000ff','#ff007f','#00ff88','#ffd700'];
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 4 + 1;
+    const color= colors[Math.floor(Math.random()*colors.length)];
+    const delay = Math.random() * 20;
+    const dur   = Math.random() * 20 + 15;
+    const left  = Math.random() * 100;
+    Object.assign(p.style, {
+      width: size+'px', height: size+'px',
+      background: color,
+      left: left+'vw',
+      animationDuration: dur+'s',
+      animationDelay: delay+'s',
+      boxShadow: `0 0 ${size*3}px ${color}`,
+    });
+    document.body.appendChild(p);
+  }
+})();
+
+/* ======================================
+   GSAP — SCROLL ANIMATIONS
+   ====================================== */
+(function() {
+  if (typeof gsap === 'undefined') return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Hero entrance
+  gsap.from('.hero-badge',  { y:30, opacity:0, duration:1, delay:0.2 });
+  gsap.from('.hero-title',  { y:60, opacity:0, duration:1.2, delay:0.5 });
+  gsap.from('.hero-sub',    { y:40, opacity:0, duration:1, delay:0.9 });
+  gsap.from('.hero-buttons',{ y:30, opacity:0, duration:1, delay:1.2 });
+
+  // Stats counter animation
+  gsap.utils.toArray('.stat-number').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 85%',
+      once: true,
+      onEnter: () => {
+        let cur = 0;
+        const step = Math.ceil(target / 60);
+        const timer = setInterval(() => {
+          cur = Math.min(cur + step, target);
+          el.textContent = cur + (target >= 100 ? '+' : '');
+          if (cur >= target) clearInterval(timer);
+        }, 28);
+      }
+    });
+  });
+
+  // Section headers
+  gsap.utils.toArray('.section-label, .section-title, .section-desc').forEach(el => {
+    gsap.from(el, {
+      y: 40, opacity: 0, duration: 0.9,
+      scrollTrigger: { trigger: el, start: 'top 88%', once: true }
+    });
+  });
+
+  // Agency grid
+  gsap.utils.toArray('.agency-grid').forEach(grid => {
+    gsap.from(grid.children, {
+      y: 60, opacity: 0, duration: 1, stagger: 0.2,
+      scrollTrigger: { trigger: grid, start: 'top 80%', once: true }
+    });
+  });
+
+  // Mission cards
+  gsap.utils.toArray('.mission-card').forEach((card, i) => {
+    gsap.from(card, {
+      y: 50, opacity: 0, duration: 0.7, delay: (i % 3) * 0.1,
+      scrollTrigger: { trigger: card, start: 'top 90%', once: true }
+    });
+  });
+
+  // Future cards
+  gsap.utils.toArray('.future-card').forEach((card, i) => {
+    gsap.from(card, {
+      y: 50, opacity: 0, duration: 0.7, delay: i * 0.08,
+      scrollTrigger: { trigger: card, start: 'top 90%', once: true }
+    });
+  });
+
+  // Pioneer cards
+  gsap.utils.toArray('.pioneer-card').forEach((card, i) => {
+    gsap.from(card, {
+      scale: 0.85, opacity: 0, duration: 0.7, delay: i * 0.07,
+      scrollTrigger: { trigger: card, start: 'top 92%', once: true }
+    });
+  });
+})();
+
+/* ======================================
+   TIMELINE — INTERSECTION OBSERVER
+   ====================================== */
+(function() {
+  const items = document.querySelectorAll('.tl-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  items.forEach(item => observer.observe(item));
+})();
+
+/* ======================================
+   DATA ENRICHMENT + SEARCH
+   ====================================== */
+(function() {
+  const missionMedia = {
+    'Apollo 11': {
+      image: 'https://images-assets.nasa.gov/image/6900063/6900063~large.jpg',
+      link: 'https://www.nasa.gov/mission/apollo-11/'
+    },
+    'Hubble Space Telescope': {
+      image: 'https://images-assets.nasa.gov/image/PIA01322/PIA01322~orig.jpg',
+      link: 'https://science.nasa.gov/mission/hubble/'
+    },
+    'Mars Exploration Rovers': {
+      image: 'https://mars.nasa.gov/system/resources/detail_files/6948_mer-bw-banner-br2.jpg',
+      link: 'https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/'
+    },
+    'James Webb Telescope': {
+      image: 'https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e001861/GSFC_20171208_Archive_e001861~orig.jpg',
+      link: 'https://science.nasa.gov/mission/webb/'
+    },
+    'Artemis I': {
+      image: 'https://images-assets.nasa.gov/image/KSC-20221215-PH-KLS01_0084/KSC-20221215-PH-KLS01_0084~large.jpg',
+      link: 'https://www.nasa.gov/mission/artemis-i/'
+    },
+    'Perseverance Rover': {
+      image: 'https://images-assets.nasa.gov/image/PIA23764/PIA23764~orig.jpg',
+      link: 'https://science.nasa.gov/mission/mars-2020-perseverance/'
+    },
+    'Chandrayaan-1': {
+      image: 'https://www.isro.gov.in/media_isro/image/index/Chandrayaan1/chandrayaan1_banner.jpg.webp',
+      link: 'https://www.isro.gov.in/Chandrayaan_1.html'
+    },
+    'Mangalyaan (MOM)': {
+      image: 'https://www.isro.gov.in/media_isro/image/index/MOM/mom_banner.jpg.webp',
+      link: 'https://www.isro.gov.in/MarsOrbiterMissionSpacecraft.html'
+    },
+    'Chandrayaan-3': {
+      image: 'https://www.isro.gov.in/media_isro/image/index/Chandrayaan3/Chandrayaan3_banner.jpg.webp',
+      link: 'https://www.isro.gov.in/Chandrayaan3_Details.html'
+    },
+    'Aditya-L1': {
+      image: 'https://www.isro.gov.in/media_isro/image/index/AdityaL1/AdityaL1-Home.jpg.webp',
+      link: 'https://www.isro.gov.in/AdityaL1.html'
+    },
+    'Gaganyaan': {
+      image: 'https://www.isro.gov.in/media_isro/image/index/Gaganyaan/Gaganyaan2.jpg.webp',
+      link: 'https://www.isro.gov.in/Gaganyaan.html'
+    },
+    'Falcon 9 Booster Return': {
+      image: 'https://www.spacex.com/static/images/falcon9/first-stage.jpg',
+      link: 'https://www.spacex.com/vehicles/falcon-9/'
+    },
+    'Crew Dragon Demo-2': {
+      image: 'https://www.spacex.com/static/images/dragon/dragon_feature.jpg',
+      link: 'https://www.spacex.com/vehicles/dragon/'
+    },
+    'Starlink Constellation': {
+      image: 'https://www.spacex.com/static/images/backgrounds/starlink_mission.jpg',
+      link: 'https://www.starlink.com/'
+    },
+    'Starship IFT Flights': {
+      image: 'https://www.spacex.com/static/images/share.jpg',
+      link: 'https://www.spacex.com/vehicles/starship/'
+    },
+    'Mars Colonization Plan': {
+      image: 'https://www.spacex.com/static/images/mars/mars_landing.jpg',
+      link: 'https://www.spacex.com/humanspaceflight/mars/'
+    }
+  };
+
+  document.querySelectorAll('.mission-card').forEach(card => {
+    const name = (card.querySelector('.mc-name')?.textContent || '').trim();
+    const meta = missionMedia[name];
+    const desc = card.querySelector('.mc-desc')?.textContent || '';
+    const year = card.querySelector('.mc-year')?.textContent || '';
+    card.dataset.searchItem = `${name} ${desc} ${year} ${card.dataset.agency || ''}`.toLowerCase();
+
+    if (meta && !card.querySelector('.mc-media')) {
+      const media = document.createElement('div');
+      media.className = 'mc-media';
+      media.innerHTML = `<img src="${meta.image}" alt="${name} mission image" loading="lazy">`;
+      card.insertBefore(media, card.firstChild);
+    }
+
+    if (meta && !card.querySelector('.mc-link')) {
+      const badge = card.querySelector('.mc-badge');
+      const actions = document.createElement('div');
+      actions.className = 'mc-actions';
+      if (badge) actions.appendChild(badge);
+      const link = document.createElement('a');
+      link.className = 'mc-link';
+      link.href = meta.link;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Official Source';
+      actions.appendChild(link);
+      card.appendChild(actions);
+    }
+  });
+
+  const timelineSources = {
+    'Sputnik 1 — First Satellite': 'https://www.britannica.com/topic/Sputnik',
+    'Yuri Gagarin — First Human in Space': 'https://www.britannica.com/biography/Yuri-Gagarin',
+    'Apollo 11 — Moon Landing': 'https://www.nasa.gov/mission/apollo-11/',
+    "Aryabhata — India's First Satellite": 'https://www.isro.gov.in/Aryabhata.html',
+    'Hubble Space Telescope Launch': 'https://science.nasa.gov/mission/hubble/',
+    'ISS Construction Begins': 'https://www.nasa.gov/international-space-station/',
+    'SpaceX Founded by Elon Musk': 'https://www.spacex.com/',
+    'Chandrayaan-1 — India Reaches Moon': 'https://www.isro.gov.in/Chandrayaan_1.html',
+    'Dragon Docks with ISS': 'https://www.spacex.com/vehicles/dragon/',
+    'MOM — Mars Orbiter Mission': 'https://www.isro.gov.in/MarsOrbiterMissionSpacecraft.html',
+    'Falcon 9 Booster Landing': 'https://www.spacex.com/vehicles/falcon-9/',
+    'James Webb Space Telescope': 'https://science.nasa.gov/mission/webb/',
+    "Chandrayaan-3 — Moon's South Pole": 'https://www.isro.gov.in/Chandrayaan3_Details.html',
+    'Starship Full Stack Test Flight': 'https://www.spacex.com/vehicles/starship/'
+  };
+
+  document.querySelectorAll('.tl-item').forEach(item => {
+    const titleEl = item.querySelector('h3');
+    const descEl = item.querySelector('p');
+    const yearEl = item.querySelector('.tl-year');
+    const title = titleEl?.textContent?.trim() || '';
+    const desc = descEl?.textContent || '';
+    const year = yearEl?.textContent || '';
+    item.dataset.searchItem = `${title} ${desc} ${year}`.toLowerCase();
+
+    const source = timelineSources[title];
+    if (source && !item.querySelector('.tl-source-link')) {
+      const a = document.createElement('a');
+      a.className = 'tl-source-link';
+      a.href = source;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = 'Read source';
+      a.style.display = 'inline-block';
+      a.style.marginTop = '10px';
+      a.style.fontSize = '0.76rem';
+      a.style.color = '#8fd6ff';
+      a.style.textDecoration = 'none';
+      a.style.borderBottom = '1px dashed rgba(143,214,255,0.5)';
+      descEl?.insertAdjacentElement('afterend', a);
+    }
+  });
+})();
+
+const pageFilters = {
+  agency: 'all',
+  query: ''
+};
+
+function normalizeText(text) {
+  return (text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function updateSearchCount(visible, total, query) {
+  const countEl = document.getElementById('searchCount');
+  if (!countEl) return;
+  countEl.textContent = query
+    ? `Showing ${visible} of ${total} records for "${query}"`
+    : `Showing all ${total} records`;
+}
+
+function applyGlobalFilters() {
+  const query = normalizeText(pageFilters.query);
+  let total = 0;
+  let visible = 0;
+
+  document.querySelectorAll('.mission-card').forEach(card => {
+    total += 1;
+    const agencyOk = pageFilters.agency === 'all' || card.dataset.agency === pageFilters.agency;
+    const text = normalizeText(card.dataset.searchItem || card.textContent);
+    const queryOk = !query || text.includes(query);
+    const show = agencyOk && queryOk;
+    card.style.display = show ? '' : 'none';
+    if (show) visible += 1;
+  });
+
+  document.querySelectorAll('.tl-item, .ongoing-card, .elon-item').forEach(item => {
+    total += 1;
+    const text = normalizeText(item.dataset.searchItem || item.textContent);
+    const show = !query || text.includes(query);
+    item.style.display = show ? '' : 'none';
+    if (show) visible += 1;
+  });
+
+  updateSearchCount(visible, total, query);
+}
+
+function filterMissions(agency, btn) {
+  pageFilters.agency = agency;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyGlobalFilters();
+}
+
+(function() {
+  const input = document.getElementById('globalSearch');
+  const clearBtn = document.getElementById('clearSearchBtn');
+  if (input) {
+    input.addEventListener('input', () => {
+      pageFilters.query = input.value;
+      applyGlobalFilters();
+    });
+  }
+  if (clearBtn && input) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      pageFilters.query = '';
+      applyGlobalFilters();
+    });
+  }
+
+  document.querySelectorAll('.search-tags span').forEach(tag => {
+    tag.addEventListener('click', () => {
+      if (!input) return;
+      input.value = tag.dataset.tag || '';
+      pageFilters.query = input.value;
+      applyGlobalFilters();
+      input.focus();
+    });
+  });
+
+  applyGlobalFilters();
+})();
+
+/* ======================================
+   NAVBAR — SCROLL EFFECT
+   ====================================== */
+(function() {
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 60) {
+      nav.style.background = 'rgba(2,4,9,0.96)';
+      nav.style.borderBottomColor = 'rgba(0,212,255,0.3)';
+    } else {
+      nav.style.background = 'rgba(2,4,9,0.75)';
+      nav.style.borderBottomColor = 'rgba(0,212,255,0.15)';
+    }
+  });
+})();
+
+/* ======================================
+   HOVER TILT ON CARDS
+   ====================================== */
+(function() {
+  document.querySelectorAll('.mission-card, .future-card, .pioneer-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      if (e.target.closest('a')) return;
+      const rect = card.getBoundingClientRect();
+      const xPct = (e.clientX - rect.left) / rect.width - 0.5;
+      const yPct = (e.clientY - rect.top)  / rect.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${xPct*12}deg) rotateX(${-yPct*10}deg) translateY(-6px) scale(1.02)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+})();
+
+/* ======================================
+   EXTERNAL LINK FALLBACK
+   ====================================== */
+(function() {
+  document.addEventListener('click', e => {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+    // Keep internal site navigation native. Force reliable behavior for external resources.
+    if (link.target === '_blank') {
+      e.preventDefault();
+      const opened = window.open(href, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        window.location.assign(href);
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
