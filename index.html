@@ -313,6 +313,22 @@
       margin-bottom: 8px;
     }
     .stat-label { font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+    .stat-thumb {
+      width: 100%;
+      height: 72px;
+      margin-top: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      overflow: hidden;
+      background: #091120;
+    }
+    .stat-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.82;
+    }
 
     /* ===== TIMELINE ===== */
     #timeline { padding: 120px 0; }
@@ -425,6 +441,19 @@
     .org-multi { background: rgba(0,255,136,0.15); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
     .tl-card h3 { font-family:'Orbitron',monospace; font-size:1.05rem; margin-bottom:8px; color:#fff; }
     .tl-card p  { font-size:0.9rem; color:rgba(180,220,255,0.7); line-height:1.6; }
+    .tl-media {
+      height: 130px;
+      margin: -24px -28px 16px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--glass-border);
+      background: #081020;
+    }
+    .tl-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
     /* ===== AGENCIES ===== */
     #agencies { padding: 120px 0; }
@@ -483,6 +512,21 @@
     .isro-name  { background: linear-gradient(90deg, #ff6b2b, #ffd700); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .spacex-name{ background: linear-gradient(90deg, #cc66ff, #ff007f); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .agency-desc { color: rgba(180,220,255,0.7); line-height:1.8; margin-bottom: 28px; font-size: 0.98rem; }
+    .agency-ref {
+      width: 100%;
+      height: 160px;
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: #081020;
+    }
+    .agency-ref img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     .mission-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
     .tag {
       padding: 6px 16px;
@@ -796,6 +840,20 @@
       border-radius: 14px;
       padding: 16px;
     }
+    .elon-media {
+      height: 112px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      border: 1px solid var(--glass-border);
+      background: #0c0f24;
+    }
+    .elon-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
     .elon-year { font-family: 'Orbitron', monospace; color: #dd88ff; font-size: 0.86rem; margin-bottom: 6px; }
     .elon-title { color: #fff; font-size: 0.93rem; margin-bottom: 8px; }
     .elon-item a {
@@ -1076,22 +1134,27 @@
       <div class="stat-item">
         <span class="stat-number" data-target="65">0</span>
         <div class="stat-label">Years of Space Age</div>
+        <div class="stat-thumb"><img src="assets/future/humans-on-mars.jpg" alt="Space age timeline reference image" loading="lazy" /></div>
       </div>
       <div class="stat-item">
         <span class="stat-number" data-target="600">0</span>
         <div class="stat-label">Humans in Space</div>
+        <div class="stat-thumb"><img src="assets/pioneers/neil-armstrong.jpg" alt="Astronaut reference image" loading="lazy" /></div>
       </div>
       <div class="stat-item">
         <span class="stat-number" data-target="1100">0</span>
         <div class="stat-label">Active Satellites</div>
+        <div class="stat-thumb"><img src="assets/future/europa-life-search.jpg" alt="Satellite and orbital reference image" loading="lazy" /></div>
       </div>
       <div class="stat-item">
         <span class="stat-number" data-target="140">0</span>
         <div class="stat-label">Planetary Missions</div>
+        <div class="stat-thumb"><img src="assets/future/venus-exploration.jpg" alt="Planetary mission reference image" loading="lazy" /></div>
       </div>
       <div class="stat-item">
         <span class="stat-number" data-target="3">0</span>
         <div class="stat-label">Mars Rovers Active</div>
+        <div class="stat-thumb"><img src="assets/future/humans-on-mars.jpg" alt="Mars rover mission reference image" loading="lazy" /></div>
       </div>
     </div>
   </div>
@@ -1420,6 +1483,7 @@
           <p class="section-label">Est. 1958 · USA</p>
           <h3 class="agency-name nasa-name">NASA</h3>
           <p class="agency-desc">The National Aeronautics and Space Administration stands as humanity's premier space exploration agency. With missions spanning the Moon, Mars, deep solar system, and beyond, NASA has produced countless scientific breakthroughs — from landing 12 humans on the Moon to deploying the James Webb Space Telescope, humanity's window to the dawn of the universe.</p>
+          <div class="agency-ref"><img src="assets/future/europa-life-search.jpg" alt="NASA mission reference image" loading="lazy" /></div>
           <div class="mission-tags" style="margin-bottom:18px;">
             <a class="tag tag-blue" style="text-decoration:none;" href="https://www.nasa.gov/missions/" target="_blank" rel="noopener">Official Mission Archive</a>
             <a class="tag tag-green" style="text-decoration:none;" href="https://science.nasa.gov/" target="_blank" rel="noopener">NASA Science</a>
@@ -1467,6 +1531,7 @@
           <p class="section-label">Est. 1969 · India</p>
           <h3 class="agency-name isro-name">ISRO</h3>
           <p class="agency-desc">The Indian Space Research Organisation is one of the world's most cost-effective and innovative space agencies. ISRO pioneered the concept of frugal space engineering — achieving Mars orbit on its very first attempt and landing near the Moon's south pole for the first time in history. With Gaganyaan, India is set to join the elite club of human spaceflight nations.</p>
+          <div class="agency-ref"><img src="assets/future/venus-exploration.jpg" alt="ISRO mission reference image" loading="lazy" /></div>
           <div class="mission-tags" style="margin-bottom:18px;">
             <a class="tag tag-orange" style="text-decoration:none;" href="https://www.isro.gov.in/SpacecraftMissions.html" target="_blank" rel="noopener">ISRO Mission Archive</a>
             <a class="tag tag-green" style="text-decoration:none;" href="https://www.isro.gov.in/Gaganyaan.html" target="_blank" rel="noopener">Gaganyaan Program</a>
@@ -1513,6 +1578,7 @@
           <p class="section-label">Est. 2002 · USA · Private</p>
           <h3 class="agency-name spacex-name">SPACEX &amp; ELON</h3>
           <p class="agency-desc">Elon Musk's SpaceX has single-handedly disrupted the space industry with revolutionary reusable rocket technology. From the Falcon 1 to Falcon 9, Dragon, and the mega-Starship, SpaceX has driven down launch costs by over 90%. Musk's bold vision: make humanity a multi-planetary species with a self-sustaining city on Mars within this century.</p>
+          <div class="agency-ref"><img src="assets/future/humans-on-mars.jpg" alt="SpaceX mission reference image" loading="lazy" /></div>
           <div class="mission-tags" style="margin-bottom:18px;">
             <a class="tag tag-purple" style="text-decoration:none;" href="https://www.spacex.com/updates/" target="_blank" rel="noopener">SpaceX Updates</a>
             <a class="tag tag-green" style="text-decoration:none;" href="https://www.spacex.com/humanspaceflight/" target="_blank" rel="noopener">Human Spaceflight</a>
@@ -2387,6 +2453,24 @@
     'Starship Full Stack Test Flight': 'https://www.spacex.com/vehicles/starship/'
   };
 
+  const timelineMedia = {
+    'Sputnik 1 — First Satellite': 'assets/future/venus-exploration.jpg',
+    'Yuri Gagarin — First Human in Space': 'assets/pioneers/yuri-gagarin.jpg',
+    'Apollo 11 — Moon Landing': 'assets/pioneers/neil-armstrong.jpg',
+    "Aryabhata — India's First Satellite": 'assets/future/venus-exploration.jpg',
+    'Space Shuttle — Reusable Era Begins': 'assets/future/europa-life-search.jpg',
+    'Hubble Space Telescope Launch': 'assets/future/europa-life-search.jpg',
+    'ISS Construction Begins': 'assets/future/humans-on-mars.jpg',
+    'SpaceX Founded by Elon Musk': 'assets/pioneers/elon-musk.jpg',
+    'Chandrayaan-1 — India Reaches Moon': 'assets/future/venus-exploration.jpg',
+    'Dragon Docks with ISS': 'assets/future/humans-on-mars.jpg',
+    'MOM — Mars Orbiter Mission': 'assets/future/humans-on-mars.jpg',
+    'Falcon 9 Booster Landing': 'assets/future/humans-on-mars.jpg',
+    'James Webb Space Telescope': 'assets/future/europa-life-search.jpg',
+    "Chandrayaan-3 — Moon's South Pole": 'assets/future/venus-exploration.jpg',
+    'Starship Full Stack Test Flight': 'assets/future/humans-on-mars.jpg'
+  };
+
   document.querySelectorAll('.tl-item').forEach(item => {
     const titleEl = item.querySelector('h3');
     const descEl = item.querySelector('p');
@@ -2397,6 +2481,15 @@
     item.dataset.searchItem = `${title} ${desc} ${year}`.toLowerCase();
 
     const source = timelineSources[title];
+    const mediaSrc = timelineMedia[title];
+    const card = item.querySelector('.tl-card');
+    if (mediaSrc && card && !card.querySelector('.tl-media')) {
+      const media = document.createElement('div');
+      media.className = 'tl-media';
+      media.innerHTML = `<img src="${mediaSrc}" alt="${title} reference image" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/future/humans-on-mars.jpg'">`;
+      card.insertBefore(media, card.firstChild);
+    }
+
     if (source && !item.querySelector('.tl-source-link')) {
       const a = document.createElement('a');
       a.className = 'tl-source-link';
@@ -2411,6 +2504,25 @@
       a.style.textDecoration = 'none';
       a.style.borderBottom = '1px dashed rgba(143,214,255,0.5)';
       descEl?.insertAdjacentElement('afterend', a);
+    }
+  });
+
+  const elonMedia = [
+    'assets/pioneers/elon-musk.jpg',
+    'assets/future/humans-on-mars.jpg',
+    'assets/future/humans-on-mars.jpg',
+    'assets/future/humans-on-mars.jpg',
+    'assets/future/europa-life-search.jpg',
+    'assets/future/humans-on-mars.jpg'
+  ];
+
+  document.querySelectorAll('.elon-item').forEach((item, idx) => {
+    if (!item.querySelector('.elon-media')) {
+      const media = document.createElement('div');
+      media.className = 'elon-media';
+      const src = elonMedia[idx] || 'assets/future/humans-on-mars.jpg';
+      media.innerHTML = `<img src="${src}" alt="Elon milestone reference image" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/future/humans-on-mars.jpg'">`;
+      item.insertBefore(media, item.firstChild);
     }
   });
 })();
