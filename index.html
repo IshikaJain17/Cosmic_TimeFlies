@@ -2331,6 +2331,13 @@
     }
   };
 
+  const missionFallbackByAgency = {
+    nasa: 'assets/future/europa-life-search.jpg',
+    isro: 'assets/future/venus-exploration.jpg',
+    spacex: 'assets/future/humans-on-mars.jpg',
+    default: 'assets/future/humans-on-mars.jpg'
+  };
+
   document.querySelectorAll('.mission-card').forEach(card => {
     const name = (card.querySelector('.mc-name')?.textContent || '').trim();
     const meta = missionMedia[name];
@@ -2341,7 +2348,9 @@
     if (meta && !card.querySelector('.mc-media')) {
       const media = document.createElement('div');
       media.className = 'mc-media';
-      media.innerHTML = `<img src="${meta.image}" alt="${name} mission image" loading="lazy">`;
+      const agency = card.dataset.agency || 'default';
+      const fallback = missionFallbackByAgency[agency] || missionFallbackByAgency.default;
+      media.innerHTML = `<img src="${meta.image}" alt="${name} mission image" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}'">`;
       card.insertBefore(media, card.firstChild);
     }
 
