@@ -813,12 +813,28 @@
       background: var(--bg-card);
       border: 1px solid var(--glass-border);
       border-radius: 20px;
-      padding: 32px 28px;
+      padding: 0 28px 28px;
       backdrop-filter: blur(20px);
       transition: all 0.4s;
       position: relative;
       overflow: hidden;
     }
+    .future-media {
+      height: 180px;
+      margin: 0 -28px 20px;
+      border-bottom: 1px solid var(--glass-border);
+      overflow: hidden;
+      background: #070d1b;
+    }
+    .future-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.45s;
+      filter: saturate(1.08) contrast(1.05);
+    }
+    .future-card:hover .future-media img { transform: scale(1.05); }
     .future-card::after {
       content: '';
       position: absolute;
@@ -1806,36 +1822,42 @@
 
     <div class="future-grid">
       <div class="future-card">
+        <div class="future-media"><img src="assets/pioneers/neil-armstrong.jpg" alt="Return to the Moon mission visual" loading="lazy" /></div>
         <div class="fc-num">01</div>
         <div class="fc-title">Return to the Moon</div>
         <div class="fc-desc">NASA's Artemis program will land the first woman and next man near the lunar south pole, establishing a permanent Gateway station in lunar orbit.</div>
         <div class="fc-year">NASA ARTEMIS · 2026</div>
       </div>
       <div class="future-card">
+        <div class="future-media"><img src="assets/future/humans-on-mars.jpg" alt="Humans on Mars Starship concept visual" loading="lazy" /></div>
         <div class="fc-num">02</div>
         <div class="fc-title">Humans on Mars</div>
         <div class="fc-desc">SpaceX's Starship targets the first uncrewed cargo missions to Mars in 2026, with crewed missions planned for the next launch window — the greatest voyage in history.</div>
         <div class="fc-year">SPACEX · 2026-2028</div>
       </div>
       <div class="future-card">
+        <div class="future-media"><img src="assets/pioneers/apj-abdul-kalam.jpg" alt="India human spaceflight vision visual" loading="lazy" /></div>
         <div class="fc-num">03</div>
         <div class="fc-title">India's Human Spaceflight</div>
         <div class="fc-desc">Gaganyaan will launch Indian Vyomanauts to orbit, forming the foundation for a future Indian space station and lunar exploration program.</div>
         <div class="fc-year">ISRO GAGANYAAN · 2025</div>
       </div>
       <div class="future-card">
+        <div class="future-media"><img src="assets/future/venus-exploration.jpg" alt="Venus exploration planet visual" loading="lazy" /></div>
         <div class="fc-num">04</div>
         <div class="fc-title">Venus Exploration</div>
         <div class="fc-desc">NASA's DAVINCI and VERITAS missions, along with ESA's EnVision, will map Venus in unprecedented detail and solve the mystery of its runaway greenhouse effect.</div>
         <div class="fc-year">NASA / ESA · 2029</div>
       </div>
       <div class="future-card">
+        <div class="future-media"><img src="assets/future/europa-life-search.jpg" alt="Europa life search mission visual" loading="lazy" /></div>
         <div class="fc-num">05</div>
         <div class="fc-title">Europa Life Search</div>
         <div class="fc-desc">NASA's Europa Clipper will investigate the ocean beneath Europa's icy crust — potentially the most habitable place in our solar system beyond Earth.</div>
         <div class="fc-year">NASA EUROPA CLIPPER · 2030</div>
       </div>
       <div class="future-card">
+        <div class="future-media"><img src="assets/pioneers/wernher-von-braun.jpg" alt="Deep space gateway engineering concept visual" loading="lazy" /></div>
         <div class="fc-num">06</div>
         <div class="fc-title">Deep Space Gateway</div>
         <div class="fc-desc">The Lunar Gateway — an international space station orbiting the Moon — will serve as a staging point for missions to the Moon, Mars, and beyond.</div>
