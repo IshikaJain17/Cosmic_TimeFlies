@@ -3,11 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="COSMOS: interactive 3D space history website covering NASA, ISRO, SpaceX, Elon Musk milestones, missions, and ongoing projects with official links." />
+  <meta name="keywords" content="NASA, ISRO, SpaceX, Elon Musk, space history, missions, Artemis, Chandrayaan, Starship" />
+  <meta name="author" content="COSMOS Team" />
+  <meta name="theme-color" content="#020409" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="COSMOS - Space History and Missions" />
+  <meta property="og:description" content="Explore space milestones, missions, and ongoing projects from NASA, ISRO, and SpaceX in an immersive 3D experience." />
+  <meta property="og:url" content="https://ishikajain17.github.io/Cosmic_TimeFlies/" />
+  <meta property="og:image" content="https://www.spacex.com/static/images/share.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="COSMOS - Space History and Missions" />
+  <meta name="twitter:description" content="Interactive timeline and mission archive for NASA, ISRO, and SpaceX." />
+  <meta name="twitter:image" content="https://www.spacex.com/static/images/share.jpg" />
+  <link rel="canonical" href="https://ishikajain17.github.io/Cosmic_TimeFlies/" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
   <title>COSMOS — Space History & Missions</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "COSMOS",
+    "url": "https://ishikajain17.github.io/Cosmic_TimeFlies/",
+    "description": "Interactive space history and mission explorer for NASA, ISRO, and SpaceX.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "COSMOS"
+    }
+  }
+  </script>
   <style>
     /* ===== RESET & BASE ===== */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -30,7 +63,22 @@
       background: var(--bg-dark);
       color: #e8f4ff;
       font-family: 'Exo 2', sans-serif;
+      line-height: 1.5;
       overflow-x: hidden;
+    }
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      z-index: 3000;
+      padding: 10px 14px;
+      color: #fff;
+      background: #000;
+      border: 1px solid #00d4ff;
+    }
+    .skip-link:focus {
+      left: 12px;
+      top: 12px;
     }
 
     /* ===== CANVAS (Three.js) ===== */
@@ -66,6 +114,7 @@
       font-size: 1.6rem;
       font-weight: 900;
       background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: 4px;
@@ -125,6 +174,7 @@
       font-weight: 900;
       line-height: 1.05;
       background: linear-gradient(135deg, #ffffff 0%, var(--neon-blue) 50%, var(--neon-purple) 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 20px;
@@ -236,6 +286,7 @@
       font-weight: 700;
       margin-bottom: 18px;
       background: linear-gradient(90deg, #fff, var(--neon-blue));
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -249,12 +300,12 @@
     /* ===== STATS ===== */
     #stats { padding: 80px 0; background: rgba(0,212,255,0.03); border-top: 1px solid rgba(0,212,255,0.1); border-bottom: 1px solid rgba(0,212,255,0.1); }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 40px; text-align: center; }
-    .stat-item { }
     .stat-number {
       font-family: 'Orbitron', monospace;
       font-size: 3rem;
       font-weight: 900;
       background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: block;
@@ -420,7 +471,6 @@
     .spacex-color{ background: radial-gradient(circle, rgba(120,0,200,0.2), rgba(20,0,40,0.6)); }
     .spacex-color .agency-ring   { border-color: rgba(176,0,255,0.5); border-top-color: transparent; }
     .spacex-color .agency-ring-2 { border-color: rgba(255,0,128,0.25); border-bottom-color: transparent; }
-    .agency-info { }
     .agency-info .section-label { margin-bottom: 6px; }
     .agency-name {
       font-family: 'Orbitron', monospace;
@@ -429,9 +479,9 @@
       margin-bottom: 16px;
       line-height: 1.1;
     }
-    .nasa-name  { background: linear-gradient(90deg, #4da6ff, #00d4ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .isro-name  { background: linear-gradient(90deg, #ff6b2b, #ffd700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .spacex-name{ background: linear-gradient(90deg, #cc66ff, #ff007f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .nasa-name  { background: linear-gradient(90deg, #4da6ff, #00d4ff); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .isro-name  { background: linear-gradient(90deg, #ff6b2b, #ffd700); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .spacex-name{ background: linear-gradient(90deg, #cc66ff, #ff007f); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .agency-desc { color: rgba(180,220,255,0.7); line-height:1.8; margin-bottom: 28px; font-size: 0.98rem; }
     .mission-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
     .tag {
@@ -856,6 +906,7 @@
       font-size: 2rem;
       font-weight: 900;
       background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 16px;
@@ -920,9 +971,11 @@
   </style>
 </head>
 <body>
+<a href="#hero" class="skip-link">Skip to main content</a>
 
 <!-- 3D Canvas -->
 <canvas id="cosmos-canvas"></canvas>
+<noscript><div style="position:relative;z-index:2;padding:12px 16px;background:#111827;color:#e5e7eb;text-align:center;">This website works best with JavaScript enabled.</div></noscript>
 
 <!-- NAVIGATION -->
 <nav id="navbar">

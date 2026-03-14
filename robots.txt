@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ishikajain17.github.io/Cosmic_TimeFlies/sitemap.xml

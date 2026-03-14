@@ -1,0 +1,17 @@
+{
+  "name": "COSMOS - Space History and Missions",
+  "short_name": "COSMOS",
+  "start_url": "/Cosmic_TimeFlies/",
+  "scope": "/Cosmic_TimeFlies/",
+  "display": "standalone",
+  "background_color": "#020409",
+  "theme_color": "#020409",
+  "description": "Interactive 3D history of space missions from NASA, ISRO, and SpaceX.",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
